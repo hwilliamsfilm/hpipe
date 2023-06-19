@@ -9,7 +9,7 @@ import os
 from PySide2 import QtWidgets, QtCore, QtGui
 from PySide2.QtWidgets import *
 import sys
-from utility import logger
+from core.hutils import logger
 from PySide2.QtGui import QPixmap
 from PySide2.QtCore import QThread, Signal
 from collections import OrderedDict
@@ -203,14 +203,14 @@ class MultipleTagWidget(QWidget):
         _log(tags)
         for tag in main_tags:
             if tag is not None:
-                if tag is not '':
+                if tag != '':
                     button = _create_tag_button(tag)
                     # button has rounded corners
                     # button.setStyleSheet("border-radius: 5px")
                     self.layout.addWidget(button)
         for tag in additional_tags:
             if tag is not None:
-                if tag is not '':
+                if tag != '':
                     if tag is not ["None"]:
                         button = _create_tag_button(tag)
                         # button has rounded corners

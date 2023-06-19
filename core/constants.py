@@ -1,7 +1,11 @@
-'''
+"""
 Constants for database
-'''
+"""
 from core.hutils import path
+import logging
+
+# GENERAL CONSTANTS
+LOG_LEVEL = logging.DEBUG
 
 # General constants
 PROJECTS_ROOT = path.convertPath('Y:/projects/')

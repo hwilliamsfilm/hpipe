@@ -77,7 +77,7 @@ def _outputs_in_directory(directory):
     return outputs
 
 
-def _sort_files(files):
+def _sort_files(files) -> list:
     """
     Sorts a list of files by version in ascending order, while keeping similar prefixed files together.
     :param list files:
@@ -124,6 +124,7 @@ def _sort_files(files):
     grouped_filenames = [item for sublist in grouped_filenames for item in sublist]
     return grouped_filenames
 
+
 def _log(message, severity):
     """
     Log a message to the console
@@ -131,10 +132,10 @@ def _log(message, severity):
     :param severity: String
     :return: None
     """
-    return
-    from utility import logger
+    from core.hutils import logger
     logger.log(message, severity)
     return True
+
 
 def _open_file(file):
     """
@@ -979,6 +980,12 @@ class DependencyViewer(QWidget):
 
 
 if __name__ == '__main__':
+
+    import core
+    if core.hutils.path.get_system() == 'osx':
+        import os
+        os.environ['QT_MAC_WANTS_LAYER'] = '1'
+
     app = QApplication(sys.argv)
     window = DependencyViewer()
     window.show()

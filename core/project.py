@@ -11,7 +11,7 @@ from importlib import reload
 import datetime
 
 # log module import
-logger.imported("project.py")
+# logger.imported("project.py")
 
 def _shots_from_dict(shot_dictionary, project):
     """

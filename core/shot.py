@@ -6,9 +6,11 @@ import core.constants as constants
 from core.hutils import logger
 from core.hutils import path
 import os
+import attr
 
 # log module import
-logger.imported("shot.py")
+# logger.imported("shot.py")
+
 
 class Shot:
     """

@@ -11,10 +11,10 @@ import json
 import shutil
 import datetime
 import os
-import importlib
 
 # log module import
 logger.imported("db.py")
+
 
 class Db(object):
     """

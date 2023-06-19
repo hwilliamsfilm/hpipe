@@ -11,7 +11,7 @@ import logging
 from PySide2 import QtCore, QtWidgets, QtGui
 from PySide2.QtWidgets import QApplication, QWidget, QTableWidget, QTableWidgetItem, QVBoxLayout, QHBoxLayout
 from PySide2.QtCore import Qt
-from utility import logger
+from core.hutils import logger
 
 
 class TableWidget(QTableWidget):
