@@ -11,6 +11,7 @@ from core.hutils import constants, logger
 import json
 import os
 
+
 log = logger.setup_logger()
 log.debug("data_manager.py loaded")
 
@@ -141,7 +142,7 @@ class ProjectDataManager:
             return []
 
         for key, val in self.data.items():
-            project_list.append(project.Project.from_json(val))
+            project_list.append(project.Project.from_dict(val))
 
         return project_list
 
@@ -178,7 +179,7 @@ class ProjectDataManager:
             return False
 
         log.warning(f"Updating project {project_name} in database at path {self.accessor.db_path}")
-        self.data[project_name] = project_to_update.export_project()
+        self.data[project_name] = project_to_update.to_dict()
 
         if push:
             return self.save()
@@ -191,7 +192,6 @@ class ProjectDataManager:
         param project.Project project_instance: project instance to be added to the database
         param bool push: if True, pushes the updated project back to the database
         :return: True if successful
-
         """
 
         if self.is_project(project_instance.name):
@@ -199,7 +199,7 @@ class ProjectDataManager:
             return False
 
         log.warning(f"Adding project {project_instance.name} to database at path {self.accessor.db_path}")
-        self.data[project_instance.name] = project_instance.export_project()
+        self.data[project_instance.name] = project_instance.to_dict()
         self.build_project_directories(project_instance)
 
         if push:
@@ -286,4 +286,3 @@ class ProjectDataManager:
         be backed up to json. If it's json, it will be backed up to json.
         """
         return self.accessor.backup(increment=True)
-

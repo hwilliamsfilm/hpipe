@@ -1,66 +1,45 @@
-'''
-Project class for active shots
-'''
+"""
+Shot class for the project database. This is the main object for the shot database and can be used to interface
+with the file system and database. This class is meant to be used with the project class and not on its own. The reason
+for this is that the project class is used to infer certain properties of the shot class such as the base path. Not
+using inheritance because shots can be used outside the project class.
+"""
 
 import core.constants as constants
-from core.hutils import logger
-from core.hutils import path
+from core.hutils import logger, path
 import os
-import attr
 
-# log module import
-# logger.imported("shot.py")
+log = logger.setup_logger()
+log.debug("shot.py loaded")
 
 
 class Shot:
     """
-    Base class for a shot in database.
+    Base class for a shot in database. This class is meant to be used with the project class and not on its own.
     """
 
-    def __init__(self,
-                 shot_name,
-                 project,
-                 frame_start=constants.FRAME_START,
-                 frame_end=constants.FRAME_END,
-                 tags=None):
+    def __init__(self, shot_name: str, project_instance: object, frame_start: int = constants.FRAME_START,
+                 frame_end: int = constants.FRAME_END, tags: list[str] = None, user_data: dict = None):
         """
         Creates a shot object. Requires a shot name and a project object to connect to. The project is linked to
         the shot object so that various shot properties can be inferred from the project object.
-
-        :param shot_name: str name of shot
-        :param project: object of project
-        :param frame_start: int start frame
-        :param frame_end: int end frame
-        :param tags: list of tags
+        :param str shot_name: Name of the shot
+        :param object project_instance: Project object that the shot belongs to
+        :param int frame_start: Starting frame of the shot
+        :param int frame_end: Ending frame of the shot
+        :param list[str] tags: List of tags for the shot
+        :param dict user_data: User data for the shot if any. This can be used to store custom data per shot.
         """
-
         self.name = shot_name
-        self.project = project
+        self.project = project_instance
         self.frame_start = frame_start
         self.frame_end = frame_end
         self.tags = tags
-
-        # need to get base path from the project object (self.project)
+        self.user_data = user_data
         self.base_path = self.get_base_path()
 
     def __repr__(self):
         return '<Shot {name}>'.format(name=self.name)
-
-    @classmethod
-    def from_json(cls, dict, proj=None):
-        # NOTE: This may or may not be used in the future since shots can only be created from a project object
-        """
-        Creates a shot from a json string
-        :returns: Shot object from json string
-        """
-
-        if dict.get('project'):
-            project = dict.get('project')
-        elif dict.get('proj'):
-            project = dict.get('proj')
-
-        return cls(dict.get('name'), project=project, frame_start=dict.get('fstart'),
-                   frame_end=dict.get('fend'), tags=dict.get('tags'))
 
     # Getting path things
 
@@ -184,25 +163,38 @@ class Shot:
         else:
             self.tags = current_tags + ',' + tag
 
-    def tag_string(self):
-        return self.tags
-
-    def remove_all_tags(self):
+    def remove_all_tags(self) -> bool:
         self.tags = ''
-        return
+        return True
 
-    def export(self):
+    @classmethod
+    def from_dict(cls, shot_dictionary: dict, parent_project: object) -> 'Shot':
+        """
+        Creates a shot object from a dictionary
+        :param shot_dictionary: dict of shot
+        :param parent_project: parent project instance
+        :return: list of shot objects
+        """
+        shot_name = shot_dictionary.get('name')
+        frame_start = shot_dictionary.get('frame_start') or shot_dictionary.get('fstart')
+        frame_end = shot_dictionary.get('frame_end') or shot_dictionary.get('fend')
+        tags = shot_dictionary.get('tags')
+        user_data = shot_dictionary.get('user_data')
+
+        shot = cls(shot_name, parent_project, frame_start, frame_end, tags, user_data)
+        return shot
+
+    def to_dict(self) -> dict:
         """
         Returns the dictionary for the entire shot to be stored along the project in the database
         :return: shot dictionary
         """
-
-        logger.debug('Exporting shot {0}...'.format(self.name))
-
         return {
             'name': self.name,
-            'fstart': self.frame_start,
-            'fend': self.frame_end,
-            'project': self.project,
+            'frame_start': self.frame_start,
+            'frame_end': self.frame_end,
+            'project': self.project.name,
             'tags': self.tag_string()
         }
+
+

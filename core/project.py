@@ -1,39 +1,17 @@
-'''
-Project class for active projects
-'''
+"""
+Project class for the project database. This is the main object for the project database and can be used to interface
+with the file system and database.
+"""
 
-from core.hutils import logger, errors, directory
+from core.hutils import logger, manager_utils
 from core import shot
 import core.constants as constants
 
-import os
-from importlib import reload
 import datetime
+import os
 
-# log module import
-# logger.imported("project.py")
-
-def _shots_from_dict(shot_dictionary, project):
-    """
-    Creates a list of shot objects from a dictionary. Extracting this from the project class to
-    create shot objects with references to the project class. Could be used outside of this class.
-    :param shots: dict of shots
-    :return: list of shot objects
-    """
-
-    shots = []
-    if shot_dictionary:
-        for shot_name, shot_dict in shot_dictionary.items():
-            frame_start = shot_dict.get('fstart')
-            frame_end = shot_dict.get('fend')
-            tags = shot_dict.get('tags')
-            shot_object = shot.Shot(shot_name=shot_name, project=project, frame_start=frame_start,
-                                    frame_end=frame_end, tags=tags)
-
-            shots.append(shot_object)
-
-    return shots
-
+log = logger.setup_logger()
+log.debug("project.py loaded")
 
 
 class Project:
@@ -41,62 +19,41 @@ class Project:
     Class representing a Project in the Project Database
     """
 
-    def __init__(self, name, client='self', date=None, description=None, shots=None):
+    def __init__(self, project_name: str, date_created: str = None, description: str = None,
+                 member_shots: dict = None, user_data: dict = None):
         """
-        Creates a project object
-        :param name: Name of the project
-        :param client: Name of the client, mostly "self"
-        :param date: Date of creation if it exists
-        :param description: Brief description of the project for remembering 20 yrs from now
-        :param shots: Shots in the project
+        Creates a project object. This is the main object for the project database and can be used to interface with
+        the file system and database.
+        :param str project_name: Name of the project
+        :param str date_created: Date the project was created
+        :param str description: Description of the project
+        :param list member_shots: List of shots in the project
+        :param dict user_data: User data for the project if any. This can be used to store custom data per shot
         """
-        self.name = name
-        self.client = client
+        self.name = project_name
         self.description = description
 
-        # create date if not specified
-        if not date:
-            date = str(datetime.date.today())
-        self.year = date.split('-')[0]
-        self.date = date
+        if not date_created:
+            date_created = str(datetime.date.today())
 
+        self.year = date_created.split('-')[0]
+        self.date = date_created
 
-        self.shots = _shots_from_dict(shots, self)
+        self.shots = manager_utils.shots_from_dict(member_shots, self)
+        self.user_data = user_data
 
     def __repr__(self):
-        return '<Project {name}>'.format(name=self.name)
+        return f"Project <{self.name.upper()}> {self.description}, created on {self.date}, " \
+               f"with {len(self.shots)} shots."
 
-    @classmethod
-    def from_json(cls, project_dictionary):
+    def get_shots(self) -> list[shot.Shot]:
         """
-        Creates a project object from a json string. Currently used for DB to create the project objects
-        :returns: Project object from project dictionary
-        """
-
-        # check if there are shots and if so, create them
-        # if project_dictionary.get('shots'):
-        #     for shot in project_dictionary.get('shots'):
-        #         shot_name = shot.get('name')
-        #         #project = # i want a reference to the project being built here
-        #
-        #     shots = [shot.Shot.from_json(v) for k, v in project_dictionary.get('shots').items()]
-
-        # create project from dictionary
-        project = cls(project_dictionary.get('name'), client=project_dictionary.get('client'),
-                      date=project_dictionary.get('date'), description=project_dictionary.get('descript'),
-                      shots=project_dictionary.get('shots'))
-
-        return project
-
-    # Getting object things
-    def get_shots(self):
-        """
-        Returns a list of shots
+        Returns the list of shots in the project.
         :return: list of shots if they exist
         """
         return self.shots
 
-    def get_shot(self, shot_name):
+    def get_shot(self, shot_name: str = None) -> shot.Shot or None:
         """
         Returns a shot object from the project
         :param str shot_name: Name of the shot
@@ -105,89 +62,115 @@ class Project:
         return [s for s in self.shots if s.name == shot_name][0]
 
     # Getting path things
-    def get_project_path(self):
+    def get_project_path(self) -> str:
+        """
+        Get file server path for project directory using constants
+        :return: str path
+        """
+        return f"{constants.PROJECTS_ROOT}/{self.year}/{self.name}"
+
+    def get_archive_path(self) -> str:
         """
         Get path for project directory using constants
         :return: str path
         """
-        return '{root}/{year}/{name}'.format(root=constants.PROJECTS_ROOT, year=self.year, name=self.name)
+        return f"{constants.ARCHIVE_ROOT}/{self.year}/{self.name}"
 
-    def get_archive_path(self):
+    def get_assets_path(self) -> str:
         """
         Get path for project directory using constants
         :return: str path
         """
-        return '{root}/{year}/{name}'.format(root=constants.ARCHIVE_ROOT, year=self.year, name=self.name)
+        return f"{self.get_project_path()}/_assets/"
 
-    def get_assets_path(self):
+    def get_comps_path(self) -> str:
         """
         Get path for project directory using constants
         :return: str path
         """
-        return '{0}/_assets/'.format(self.get_project_path())
+        return f"{self.get_project_path()}/comps/"
 
-    def get_comps_path(self):
+    def get_delivery_path(self) -> str:
         """
         Get path for project directory using constants
         :return: str path
         """
-        return '{0}/comps/'.format(self.get_project_path())
+        return f"{self.get_project_path()}/deliveries/"
 
-    def get_delivery_path(self):
-        """
-        Get path for project directory using constants
-        :return: str path
-        """
-        return '{0}/deliveries/'.format(self.get_project_path())
-
-    def get_shot_path(self):
+    def get_shot_path(self) -> str:
         """
         Get path for shot directory for project using constants. Checks for the old file structure first
         :return:
         """
-        path = self.get_project_path()
-        shot_path = '{0}/shots/'.format(path)
+        shot_path = f'{self.get_project_path()}/shots/'
 
-        # Need to check if project was the old file structure
         if not os.path.exists(shot_path):
-            shot_path = '{0}/scenes/'.format(path)
+
+            # Check for old file structure
+            shot_path = f'{self.get_project_path()}/scenes/'
             if not os.path.exists(shot_path):
-                return None
+
+                # should not happen
+                raise FileNotFoundError(f"Could not find shots or scenes directory for {self.name}")
 
         return shot_path
 
-    # Doing things
-    def create_shot(self, name, frame_start=constants.FRAME_START, frame_end=constants.FRAME_END):
+    def create_shot(self, shot_name: str, frame_start: int = 1001, frame_end: int = 1100,
+                    user_data: dict = None, tags: list = None) -> shot.Shot:
         """
-        Adds shot to current project
-        :return:
+        Creates a shot object and adds it to the project
+        :param str shot_name: Name of the shot
+        :param int frame_start: Start frame of the shot
+        :param int frame_end: End frame of the shot
+        :param dict user_data: User data for the shot if any. This can be used to store custom data per shot
+        :param list tags: List of tags for the shot
+        :return: Shot object
         """
-        new_shot = shot.Shot(name, frame_start=frame_start, frame_end=frame_end, proj=self.name)
+        new_shot = shot.Shot(shot_name, project_instance=self, frame_start=frame_start, frame_end=frame_end,
+                             user_data=user_data, tags=tags)
         self.shots.append(new_shot)
         return new_shot
 
-    # Exporting Things
-    def export_shots(self):
+    def export_shots(self) -> dict:
         """
-        export shots for storage in db
+        Export the shots in the project to a dictionary for storage in the database.
         :return: dict of shots
         """
 
         shot_dictionary = {}
-        for shot in self.get_shots():
-            shot_dictionary[shot.name] = shot.export()
+        for shot_instance in self.get_shots():
+            shot_dictionary[shot_instance.name] = shot_instance.to_dict()
         return shot_dictionary
 
-    def export_project(self):
+    @classmethod
+    def from_dict(cls, project_dictionary) -> 'Project':
         """
-        Returns the dictionary for the entire project to be stored in db
+        Creates a project object from a json string. Currently, this is used for DB to create the project objects
+        :returns: Project object from project dictionary
+        """
+        project_name = project_dictionary.get('name') or project_dictionary.get('project_name')
+        date_created = project_dictionary.get('date') or project_dictionary.get('date_created')
+        description = project_dictionary.get('descript') or project_dictionary.get('description')
+        shots = project_dictionary.get('shots') or project_dictionary.get('member_shots')
+        user_data = project_dictionary.get('user_data')
+
+        project = cls(project_name, date_created, description, shots, user_data)
+        return project
+
+    def to_dict(self) -> dict:
+        """
+        Returns the dictionary for the entire project to be stored in db.
         :return:
         """
-
+        project_name = self.name
+        date_created = self.date
+        description = self.description
+        shots = self.export_shots()
+        user_data = self.user_data
         return {
-            'name': self.name,
-            'shots': self.export_shots(),
-            'client': self.client,
-            'date': self.date,
-            'descript': self.description
+            'name': project_name,
+            'shots': shots,
+            'date': date_created,
+            'description': description,
+            'user_data': user_data
         }

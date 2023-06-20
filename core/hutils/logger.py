@@ -3,11 +3,10 @@ Some customizations and basic utility functions on top of logging module.
 """
 import logging
 from colorlog import ColoredFormatter
-from core import constants
 
 
 FORMAT = "%(asctime)s::%(levelname)s-%(funcName)s | %(message)s"
-LOG_LEVEL = constants.LOG_LEVEL
+LOG_LEVEL = logging.DEBUG
 LOG_FORMAT = "  %(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(asctime)s:::  " \
             "%(message)s%(reset)s :: %(log_color)s%(funcName)s"
 
@@ -22,6 +21,8 @@ def setup_logger() -> logging.Logger:
     stream = logging.StreamHandler()
     stream.setLevel(LOG_LEVEL)
     stream.setFormatter(formatter)
+    if logging.getLogger('pythonConfig').hasHandlers():
+        logging.getLogger('pythonConfig').handlers.clear()
     log = logging.getLogger('pythonConfig')
     log.setLevel(LOG_LEVEL)
     log.addHandler(stream)
