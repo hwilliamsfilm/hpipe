@@ -91,7 +91,7 @@ class JsonDataAccessor(AbstractDataAccessor):
         raise NotImplementedError("Backup not implemented yet")
 
 
-def _get_data_accessor() -> AbstractDataAccessor or None:
+def _get_data_accessor() -> AbstractDataAccessor:
     """
     Factory method for data accessor. Returns the appropriate data accessor based on the config.
     :return: AbstractDataAccessor subclass
@@ -146,7 +146,7 @@ class ProjectDataManager:
 
         return project_list
 
-    def get_project(self, project_name: str) -> project.Project or None:
+    def get_project(self, project_name: str) -> project.Project:
         """
         Builds a project.Project object from the current data given a project name.
         param str project_name: name of project
@@ -155,8 +155,7 @@ class ProjectDataManager:
             if project_instance.name == project_name:
                 return project_instance
 
-        log.warning(f"Project {project_name} not found in database at path {self.accessor.db_path}")
-        return None
+        raise ValueError(f"Project {project_name} not found in database at path {self.accessor.db_path}")
 
     def is_project(self, project_name: str) -> bool:
         """
@@ -204,6 +203,8 @@ class ProjectDataManager:
 
         if push:
             return self.save()
+
+        return True
 
     @staticmethod
     def build_project_directories(project_instance: project.Project) -> bool:
@@ -259,7 +260,8 @@ class ProjectDataManager:
         param bool push: if True, pushes the updated project back to the database
         :return: True if successful
         """
-        project_name = shot_to_remove.project.name
+        parent_project = shot_to_remove.project
+        project_name = parent_project.name
 
         if project_name not in self.data.keys():
             log.warning(f"Project {project_name} not found in database at path {self.accessor.db_path}")

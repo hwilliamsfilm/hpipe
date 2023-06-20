@@ -6,6 +6,7 @@ with the file system and database.
 from core.hutils import logger, manager_utils
 from core import shot
 import core.constants as constants
+from typing import *
 
 import datetime
 import os
@@ -19,8 +20,8 @@ class Project:
     Class representing a Project in the Project Database
     """
 
-    def __init__(self, project_name: str, date_created: str = None, description: str = None,
-                 member_shots: dict = None, user_data: dict = None):
+    def __init__(self, project_name: str, date_created: str = '', description: str = '',
+                 member_shots: Union[Dict[Any, Any], None] = None, user_data: Union[Dict[Any, Any], None] = None):
         """
         Creates a project object. This is the main object for the project database and can be used to interface with
         the file system and database.
@@ -39,6 +40,9 @@ class Project:
         self.year = date_created.split('-')[0]
         self.date = date_created
 
+        if not member_shots:
+            member_shots = {}
+
         self.shots = manager_utils.shots_from_dict(member_shots, self)
         self.user_data = user_data
 
@@ -53,7 +57,7 @@ class Project:
         """
         return self.shots
 
-    def get_shot(self, shot_name: str = None) -> shot.Shot or None:
+    def get_shot(self, shot_name: str = '') -> shot.Shot:
         """
         Returns a shot object from the project
         :param str shot_name: Name of the shot
@@ -61,7 +65,6 @@ class Project:
         """
         return [s for s in self.shots if s.name == shot_name][0]
 
-    # Getting path things
     def get_project_path(self) -> str:
         """
         Get file server path for project directory using constants
@@ -116,7 +119,7 @@ class Project:
         return shot_path
 
     def create_shot(self, shot_name: str, frame_start: int = 1001, frame_end: int = 1100,
-                    user_data: dict = None, tags: list = None) -> shot.Shot:
+                    user_data: Union[Dict[Any, Any], None] = None, tags: Union[List[Any], None] = None) -> shot.Shot:
         """
         Creates a shot object and adds it to the project
         :param str shot_name: Name of the shot
@@ -126,6 +129,13 @@ class Project:
         :param list tags: List of tags for the shot
         :return: Shot object
         """
+
+        if not user_data:
+            user_data = {}
+
+        if not tags:
+            tags = []
+
         new_shot = shot.Shot(shot_name, project_instance=self, frame_start=frame_start, frame_end=frame_end,
                              user_data=user_data, tags=tags)
         self.shots.append(new_shot)

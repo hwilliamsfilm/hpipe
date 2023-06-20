@@ -9,6 +9,10 @@ import core.constants as constants
 from core.hutils import logger, path
 import os
 
+from typing import *
+if TYPE_CHECKING:
+    from core import project
+
 log = logger.setup_logger()
 log.debug("shot.py loaded")
 
@@ -18,8 +22,9 @@ class Shot:
     Base class for a shot in database. This class is meant to be used with the project class and not on its own.
     """
 
-    def __init__(self, shot_name: str, project_instance: object, frame_start: int = constants.FRAME_START,
-                 frame_end: int = constants.FRAME_END, tags: list[str] = None, user_data: dict = None):
+    def __init__(self, shot_name: str, project_instance: 'project.Project', frame_start: int = constants.FRAME_START,
+                 frame_end: int = constants.FRAME_END, tags: Union[list[str], None] = None,
+                 user_data: Union[dict[Any, Any], None] = None):
         """
         Creates a shot object. Requires a shot name and a project object to connect to. The project is linked to
         the shot object so that various shot properties can be inferred from the project object.
@@ -30,6 +35,13 @@ class Shot:
         :param list[str] tags: List of tags for the shot
         :param dict user_data: User data for the shot if any. This can be used to store custom data per shot.
         """
+
+        if not tags:
+            tags = []
+
+        if not user_data:
+            user_data = {}
+
         self.name = shot_name
         self.project = project_instance
         self.frame_start = frame_start
@@ -40,8 +52,6 @@ class Shot:
 
     def __repr__(self):
         return '<Shot {name}>'.format(name=self.name)
-
-    # Getting path things
 
     def get_base_path(self):
         """

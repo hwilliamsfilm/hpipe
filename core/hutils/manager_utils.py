@@ -9,7 +9,7 @@ log = logger.setup_logger()
 log.debug("manager_utils.py loaded")
 
 
-def shots_from_dict(shot_dictionary: dict, parent_project: object) -> list[shot.Shot]:
+def shots_from_dict(shot_dictionary: dict, parent_project: object) -> list['shot.Shot']:
     """
     Creates a list of shot objects from a dictionary. Extracting this from the project class to
     create shot objects with references to the project class.
