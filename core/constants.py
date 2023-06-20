@@ -50,3 +50,12 @@ FRAME_START = 1000
 FRAME_END = 1100
 
 SLATE_PATH = r'Y:\_global_assets\slate\slate_A01.png'
+
+SHOT_FOLDER = 'shots'
+PLATE_FOLDER = 'plate'
+OUTPUT_FOLDER = 'output'
+WORKAREA_FOLDER = '_workarea'
+COMP_FOLDER = 'comp'
+RENDER_FOLDER = 'render'
+NUKE_FOLDER = 'nuke'
+WORKING_FOLDER = 'working_files'

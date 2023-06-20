@@ -5,11 +5,15 @@ Utility functions for the manager class and other classes that use the manager c
 from core import shot
 from core.hutils import logger
 
+from typing import *
+if TYPE_CHECKING:
+    from core import project
+
 log = logger.setup_logger()
 log.debug("manager_utils.py loaded")
 
 
-def shots_from_dict(shot_dictionary: dict, parent_project: object) -> list['shot.Shot']:
+def shots_from_dict(shot_dictionary: dict, parent_project: 'project.Project') -> list['shot.Shot']:
     """
     Creates a list of shot objects from a dictionary. Extracting this from the project class to
     create shot objects with references to the project class.
@@ -19,6 +23,7 @@ def shots_from_dict(shot_dictionary: dict, parent_project: object) -> list['shot
     """
 
     shots = []
+
     if shot_dictionary:
         for shot_name, shot_dict in shot_dictionary.items():
             shot_object = shot.Shot.from_dict(shot_dict, parent_project)

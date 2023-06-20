@@ -9,3 +9,6 @@ DB_TYPE = 'json'
 
 # LIBRARY CONSTANTS
 USD_LIB = path.convertPath(path.fix_path(r'Y:/_global_assets/usd'))
+
+SHOT_FOLDER = 'shots'
+PLATE_FOLDER = 'plate'

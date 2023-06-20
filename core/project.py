@@ -21,7 +21,7 @@ class Project:
     """
 
     def __init__(self, project_name: str, date_created: str = '', description: str = '',
-                 member_shots: Union[Dict[Any, Any], None] = None, user_data: Union[Dict[Any, Any], None] = None):
+                 member_shots: Union[Dict[str, Any], None] = None, user_data: Union[Dict[Any, Any], None] = None):
         """
         Creates a project object. This is the main object for the project database and can be used to interface with
         the file system and database.

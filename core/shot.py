@@ -6,8 +6,7 @@ using inheritance because shots can be used outside the project class.
 """
 
 import core.constants as constants
-from core.hutils import logger, path
-import os
+from core.hutils import logger
 
 from typing import *
 if TYPE_CHECKING:
@@ -15,6 +14,16 @@ if TYPE_CHECKING:
 
 log = logger.setup_logger()
 log.debug("shot.py loaded")
+
+
+# TODO: could replace this with a dataclass
+class ShotDict(TypedDict):
+    shot_name: str
+    frame_start: int
+    frame_end: int
+    project_name: str
+    tags: Union[list[str], None]
+    user_data: Union[dict[Any, Any], None]
 
 
 class Shot:
@@ -51,57 +60,64 @@ class Shot:
         self.base_path = self.get_base_path()
 
     def __repr__(self):
-        return '<Shot {name}>'.format(name=self.name)
+        return f"Shot <{self.name.upper()}> from project <{self.project.name.upper()}>, " \
+               f"frames {self.frame_start} to {self.frame_end}"
 
-    def get_base_path(self):
+    def get_base_path(self) -> str:
         """
-        Returns the base path of the shot
+        Returns the base path of the shot. This is the path of the project + shots folder.
         :return: str base path
         """
-        return self.project.get_project_path() + '/shots/'
 
+        if not self.project:
+            raise ValueError("Project not set for shot")
 
-    def get_shot_path(self):
+        return f"{self.project.get_project_path()}/{constants.SHOT_FOLDER}/"
+
+    def get_shot_path(self) -> str:
         """
         Returns the path of the shot
         :return: str shot path
         """
-        return self.base_path + self.name
+        return f"{self.base_path}/{self.name}"
 
-    def get_plate_path(self):
+    def get_plate_path(self) -> str:
         """
         Returns the path of the plate folder
         :return: str plate path
         """
-        return self.get_shot_path() + '/plate/'
+        # return self.get_shot_path() + '/plate/'
+        return f"{self.base_path}/{constants.PLATE_FOLDER}/"
 
-    def get_workarea_path(self):
+    def get_workarea_path(self) -> str:
         """
         Returns the path of the workarea folder
         :return: str workarea path
         """
-        return self.get_shot_path() + '/output/' + '_workarea/'
+        # return self.get_shot_path() + '/output/' + '_workarea/'
+        return f"{self.base_path}/{constants.OUTPUT_FOLDER}/{constants.WORKAREA_FOLDER}/"
 
-    def get_comps_path(self):
+    def get_comps_path(self) -> str:
         """
-        Returns the path of the comps folder
+        Returns the path of the comps' folder
         :return: str comps path
         """
-        return self.get_shot_path() + '/output/' + 'comp/'
+        return f"{self.base_path}/{constants.OUTPUT_FOLDER}/{constants.COMP_FOLDER}/"
 
     def get_render_path(self):
         """
         Returns the path of the render folder
         :return: str render path
         """
-        return self.get_shot_path() + '/output/' + 'render/'
+        return f"{self.base_path}/{constants.OUTPUT_FOLDER}/{constants.RENDER_FOLDER}/"
 
     def get_nuke_path(self):
         """
         Returns the path of the nuke folder
         :return: str nuke scripts path
         """
-        return self.get_shot_path() + '/working_files/' + 'nuke/'
+        # return self.get_shot_path() + '/working_files/' + 'nuke/'
+        return f"{self.base_path}/{constants.WORKING_FOLDER}/{constants.NUKE_FOLDER}/"
 
     def get_houdini_path(self):
         """
@@ -110,101 +126,104 @@ class Shot:
         """
         return self.get_shot_path() + '/working_files/' + 'houdini/'
 
-    def get_tags(self):
+    def get_tags(self) -> list[str]:
         """
-        Returns the tags of the shot. Tags are comma separated strings, and are returned as a list. The tags
-        are used to mark shot milestones for production tracking.
-        :return:
+        Returns the tags of the shot.
+        :return: list[str] tags
         """
-        if self.tags is not None:
-            return self.tags.split(',')
-        else:
-            return []
+        return self.tags
 
-    # Getting shot things
-    def get_comps(self):
-        dir = self.get_comps_path()
-        try:
-            return path.get_image_dirs(dir)
-        except Exception as e:
-            logger.error('Error getting comps for shot {0}: {1}'.format(self.name, e))
-            return []
+    def get_comps(self) -> list[str]:
+        """
+        Returns the comps contained in the comps' folder
+        :return: list[str] comps
+        """
+        # FIXME: Need to use factory pattern to return image sequence objects
+        raise NotImplementedError
 
-    def get_plates(self, database=None):
-        plate_dir = self.get_plate_path(database=database)
-        try:
-            return path.get_image_dirs(plate_dir)
-        except Exception as e:
-            logger.error('Error getting plates for shot {0}: {1}'.format(self.name, e))
-            return []
+    def get_plates(self) -> list[str]:
+        """
+        Returns the plates contained in the plate folder.
+        :return: list[str] plates
+        """
+        # FIXME: Need to use factory pattern to return image sequence objects
+        raise NotImplementedError
 
-    def get_work(self):
-        dir = self.get_workarea_path()
-        return path.get_image_dirs(dir)
+    def get_work(self) -> list[str]:
+        """
+        Returns the work contained in the workarea folder.
+        :return: list[str] work
+        """
+        # FIXME: Need to use factory pattern to return image sequence objects. Also not clear what "work" is.
+        # dir = self.get_workarea_path()
+        # return path.get_image_dirs(dir)
+        raise NotImplementedError
 
-    def get_project_files(self):
-        from assets import projectFile
-        from assets import projectFile
-        from pprint import pprint
-        nuke_files = [projectFile.NukeProjectFile(os.path.join(self.get_nuke_path(), s)) for s in os.listdir(self.get_nuke_path()) if '.nk' in s and '~' not in s and 'autosave' not in s]
-        houdini_files = [projectFile.HoudiniProjectFile(os.path.join(self.get_houdini_path(), s)) for s in os.listdir(self.get_houdini_path()) if '.hiplc' in s]
+    def get_project_files(self) -> list[str]:
+        """
+        Returns the project files contained in the nuke and houdini folders.
+        :return: list[str] project files
+        """
+        # FIXME: Need to use factory pattern to general ProjectFile objects
+        # return nuke_files + houdini_files
+        raise NotImplementedError
 
-        return nuke_files + houdini_files
+    def get_renders(self) -> list[str]:
+        """
+        Returns the renders contained in the render folder.
+        :return: list[str] renders
+        """
+        raise NotImplementedError
 
-    def get_renders(self):
-        rpath = self.get_render_path()
-        return path.get_image_dirs(rpath)
+    def get_assets(self) -> list[str]:
+        """
+        Returns the assets contained in the shot.
+        :return: list[str] assets
+        """
+        raise NotImplementedError
 
-    def get_assets(self):
-        return NotImplementedError
+    def link_project(self, project_instance: 'project.Project') -> bool:
+        # FIXME: I should probably not support this.
+        self.project = project_instance
+        return True
 
-    # Doing Shot things
-    def link_project(self, proj):
-        self.project = proj
-
-    def add_tag(self, tag):
-        current_tags = self.tags
-
-        logger.warning('Current tags: {0}'.format(current_tags))
-        logger.warning('Adding tag: {0}'.format(tag))
-
-        if current_tags is None:
-            self.tags = tag
-        else:
-            self.tags = current_tags + ',' + tag
+    def add_tag(self, tag) -> bool:
+        self.tags.append(tag)
+        return True
 
     def remove_all_tags(self) -> bool:
-        self.tags = ''
+        self.tags = ['']
         return True
 
     @classmethod
-    def from_dict(cls, shot_dictionary: dict, parent_project: object) -> 'Shot':
+    def from_dict(cls, shot_dictionary: ShotDict, parent_project: 'project.Project') -> 'Shot':
         """
         Creates a shot object from a dictionary
         :param shot_dictionary: dict of shot
         :param parent_project: parent project instance
         :return: list of shot objects
         """
-        shot_name = shot_dictionary.get('name')
-        frame_start = shot_dictionary.get('frame_start') or shot_dictionary.get('fstart')
-        frame_end = shot_dictionary.get('frame_end') or shot_dictionary.get('fend')
-        tags = shot_dictionary.get('tags')
-        user_data = shot_dictionary.get('user_data')
 
-        shot = cls(shot_name, parent_project, frame_start, frame_end, tags, user_data)
+        shot_name = shot_dictionary['shot_name']
+        frame_start = shot_dictionary['frame_start']
+        frame_end = shot_dictionary['frame_end']
+        tags = shot_dictionary['tags']
+        user_data = shot_dictionary['user_data']
+
+        shot = cls(shot_name=shot_name, project_instance=parent_project, frame_start=frame_start,
+                   frame_end=frame_end, tags=tags, user_data=user_data)
         return shot
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> ShotDict:
         """
         Returns the dictionary for the entire shot to be stored along the project in the database
         :return: shot dictionary
         """
         return {
-            'name': self.name,
+            'shot_name': self.name,
             'frame_start': self.frame_start,
             'frame_end': self.frame_end,
-            'project': self.project.name,
-            'tags': self.tag_string()
+            'project_name': self.project.name,
+            'tags': self.tags,
+            'user_data': self.user_data,
         }
-
-
