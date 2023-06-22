@@ -1,22 +1,18 @@
-'''
-Module containing path core.hutils functions
-'''
+"""
+This module contains functions for dealing with file paths.
+"""
 
 import os
 import platform
-import re
-from core.hutils import logger
-from pprint import pprint
 
 
-def fix_path(old_path, sep='/'):
-    '''
-    Returns corrected path
-    :param old_path: path to fix
-    :param sep: seperator for new path
-    :return: Str corrected path
-    '''
-
+def fix_path(old_path: str, seperator: str = '/') -> str:
+    """
+    Fixes a path to be the correct format for the current OS
+    :param old_path: Path to fix
+    :param seperator: Seperator to use for the path
+    :return: Fixed path
+    """
     _path = old_path.replace('\\', '/')
     _path = _path.replace('\\\\', '/')
     _path = _path.replace('//', '/')
@@ -24,30 +20,34 @@ def fix_path(old_path, sep='/'):
     if _path.endswith('/'):
         _path = _path[:-1]
 
-    _path = _path.replace('/', sep)
+    _path = _path.replace('/', seperator)
 
     new_path = _path
     return new_path
 
 
-def get_system():
-    '''
-    Returns "osx" or "windows" depending on where this function is run
-    :return: str "osx" or "windows"
-    '''
-    from core.hutils import logger
+class SystemConfig:
+    """
+    Class for determining the current system and setting the correct paths.
+    """
+    def __init__(self):
+        self.system = get_system()
+        self.root = get_root()
 
-    if platform.system() == 'Darwin':
-        # logger.debug('OSX MACHINE')
-        return 'osx'
-    if platform.system() == 'Windows':
-        # logger.debug('WINDOWS MACHINE')
-        return 'windows'
-    if platform.system() == 'Linux':
-        # logger.debug('LINUX MACHINE')
-        return 'linux'
-    else:
-        return 'windows'
+    @staticmethod
+    def get_system(self):
+        """
+        Returns the current system
+        """
+
+        if platform.system() == 'Darwin':
+            return 'osx'
+        if platform.system() == 'Windows':
+            return 'windows'
+        if platform.system() == 'Linux':
+            return 'linux'
+        else:
+            return 'windows'
 
 
 def osx_to_windows(path):
@@ -222,83 +222,3 @@ def verify_directory(directory, create_if_not=False, verbose=False):
     else:
         # if directory exists, return it
         return directory
-
-
-def get_image_sequences(dir):
-    '''
-    Takes a directory argument and returns a dictionary of filenames (keys) and list of frames (values)
-    :param dir:
-    :return:
-    '''
-    from asset import sequence
-
-    regex = r'(?P<root>.+)/(?P<filename>.+)_(?P<frame>\d+).(?P<extension>\w+)'
-    filenames = {}
-
-    for d in os.listdir(dir):
-        # logger.debug(d)
-        full_path = dir+'/'+d
-        match = re.match(regex, full_path, flags=re.IGNORECASE)
-        if match:
-            if get_extension(d)=='txt':
-                continue
-            if get_extension(d)=='tx':
-                continue
-            if get_extension(d)=='mp4':
-                continue
-            name = match.group('filename')
-            if name in filenames.keys():
-                filenames[name].append(full_path)
-            else:
-                filenames[name] = [full_path]
-
-    for k, v in filenames.items():
-        v.sort()
-        filenames[k] = v
-
-    # logger.debug(filenames)
-
-    sequences = []
-    for k, v in filenames.items():
-        if 'deep' in k:
-            continue
-        if get_extension(v[0]) == 'exr':
-            sequences.append(sequence.ExrImageSequence(v))
-        if get_extension(v[0]) == 'jpg' or get_extension(v[0]) == 'png':
-            sequences.append(sequence.GeneralImageSequence(v))
-
-    return sequences
-
-
-def get_image_dirs(root):
-    sequences = []
-    for folder in os.listdir(root):
-        # logger.debug(folder)
-        d = root + '/' + folder
-        try:
-            image_seq = get_image_sequences(d)
-            # logger.debug(d)
-            if image_seq:
-                sequences.append(image_seq[0])
-        except NotADirectoryError as e:
-            logger.debug('skipping {0}'.format(d))
-
-    return sequences
-
-
-def roundrobin(*iterables):
-    """
-    roundrobin('ABC', 'D', 'EF') --> A D E B F C
-    """
-    from itertools import cycle, islice
-    # Recipe credited to George Sakkis
-    num_active = len(iterables)
-    nexts = cycle(iter(it).__next__ for it in iterables)
-    while num_active:
-        try:
-            for next in nexts:
-                yield next()
-        except StopIteration:
-            # Remove the iterator we just exhausted from the cycle.
-            num_active -= 1
-            nexts = cycle(islice(nexts, num_active))

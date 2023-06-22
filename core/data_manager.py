@@ -21,6 +21,9 @@ class AbstractDataAccessor(ABC):
     Abstract class for data accessors. This is the primary interface for the Projects database.
     """
 
+    def __init__(self):
+        pass
+
     @abstractmethod
     def get_data(self) -> dict:
         """

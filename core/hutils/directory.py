@@ -1,6 +1,6 @@
-'''
-Module containing functions for building directories
-'''
+"""
+This module contains functions for creating directories
+"""
 
 import os
 from core.hutils import logger
