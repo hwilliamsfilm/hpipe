@@ -15,6 +15,14 @@ log = logger.setup_logger()
 log.debug("project.py loaded")
 
 
+class ProjectDict(TypedDict):
+    project_name: str
+    date_created: str
+    description: str
+    member_shots: Union[Dict[str, Any], None]
+    user_data: Union[Dict[Any, Any], None]
+
+
 class Project:
     """
     Class representing a Project in the Project Database
@@ -109,7 +117,7 @@ class Project:
 
         if not os.path.exists(shot_path):
 
-            # Check for old file structure
+            # Check for deprecated file structure
             shot_path = f'{self.get_project_path()}/scenes/'
             if not os.path.exists(shot_path):
 
@@ -152,22 +160,29 @@ class Project:
             shot_dictionary[shot_instance.name] = shot_instance.to_dict()
         return shot_dictionary
 
+#
+    project_name: str
+    date_created: str
+    description: str
+    member_shots: Union[Dict[str, Any], None]
+    user_data: Union[Dict[Any, Any], None]
+
     @classmethod
-    def from_dict(cls, project_dictionary) -> 'Project':
+    def from_dict(cls, project_dictionary: ProjectDict) -> 'Project':
         """
         Creates a project object from a json string. Currently, this is used for DB to create the project objects
         :returns: Project object from project dictionary
         """
-        project_name = project_dictionary.get('name') or project_dictionary.get('project_name')
-        date_created = project_dictionary.get('date') or project_dictionary.get('date_created')
-        description = project_dictionary.get('descript') or project_dictionary.get('description')
-        shots = project_dictionary.get('shots') or project_dictionary.get('member_shots')
-        user_data = project_dictionary.get('user_data')
+        project_name = project_dictionary['project_name']
+        date_created = project_dictionary['date_created']
+        description = project_dictionary['description']
+        shots = project_dictionary['member_shots']
+        user_data = project_dictionary['user_data']
 
         project = cls(project_name, date_created, description, shots, user_data)
         return project
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> 'ProjectDict':
         """
         Returns the dictionary for the entire project to be stored in db.
         :return:
@@ -178,9 +193,9 @@ class Project:
         shots = self.export_shots()
         user_data = self.user_data
         return {
-            'name': project_name,
-            'shots': shots,
-            'date': date_created,
+            'project_name': project_name,
+            'member_shots': shots,
+            'date_created': date_created,
             'description': description,
             'user_data': user_data
         }

@@ -112,17 +112,10 @@ class ProjectDataManager:
 
     def __init__(self):
         self.accessor = _get_data_accessor()
-        self.data = self.load()
+        self.data = self.accessor.data
 
     def __repr__(self) -> str:
         return f" Project Manager @ {self.accessor.db_path}"
-
-    def load(self) -> dict:
-        """
-        Loads the database into memory using the specific implementation of the DataAccessor.
-        :return: dictionary of the database
-        """
-        return self.accessor.get_data()
 
     def save(self) -> bool:
         """

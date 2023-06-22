@@ -16,7 +16,6 @@ log = logger.setup_logger()
 log.debug("shot.py loaded")
 
 
-# TODO: could replace this with a dataclass
 class ShotDict(TypedDict):
     shot_name: str
     frame_start: int
@@ -196,7 +195,7 @@ class Shot:
         return True
 
     @classmethod
-    def from_dict(cls, shot_dictionary: ShotDict, parent_project: 'project.Project') -> 'Shot':
+    def from_dict(cls, shot_dictionary: 'ShotDict', parent_project: 'project.Project') -> 'Shot':
         """
         Creates a shot object from a dictionary
         :param shot_dictionary: dict of shot
@@ -214,7 +213,7 @@ class Shot:
                    frame_end=frame_end, tags=tags, user_data=user_data)
         return shot
 
-    def to_dict(self) -> ShotDict:
+    def to_dict(self) -> 'ShotDict':
         """
         Returns the dictionary for the entire shot to be stored along the project in the database
         :return: shot dictionary
