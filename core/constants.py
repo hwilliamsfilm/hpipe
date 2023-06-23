@@ -1,7 +1,7 @@
 """
 Constants for database
 """
-from core.hutils import path
+from core.hutils import system
 import logging
 
 # GENERAL CONSTANTS
@@ -60,7 +60,7 @@ RENDER_FOLDER = 'render'
 NUKE_FOLDER = 'nuke'
 WORKING_FOLDER = 'working_files'
 
-from core.hutils import path
+from core.hutils import system
 
 # PATH CONSTANTS
 DB_PATH = path.convertPath(path.fix_path(r'Y:/project_db/projects_refactor.json'))
@@ -74,3 +74,5 @@ USD_LIB = path.convertPath(path.fix_path(r'Y:/_global_assets/usd'))
 
 SHOT_FOLDER = 'shots'
 PLATE_FOLDER = 'plate'
+
+
