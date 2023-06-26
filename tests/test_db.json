@@ -1,0 +1,714 @@
+{
+    "car_rig": {
+        "project_name": "car_rig",
+        "member_shots": {
+            "dev": {
+                "shot_name": "dev",
+                "frame_start": "1000",
+                "frame_end": "1300",
+                "project_name": "car_rig",
+                "tags": [],
+                "user_data": {}
+            }
+        },
+        "date_created": "2023-01-07",
+        "description": "create and animate car destruction rig",
+        "user_data": {}
+    },
+    "christmas": {
+        "project_name": "christmas",
+        "member_shots": {
+            "CHR_000_0100": {
+                "shot_name": "CHR_000_0100",
+                "frame_start": "1000",
+                "frame_end": "1200",
+                "project_name": "christmas",
+                "tags": [],
+                "user_data": {}
+            }
+        },
+        "date_created": "2022-11-20",
+        "description": "christmas tree anim for fun",
+        "user_data": {}
+    },
+    "defaults": {
+        "project_name": "defaults",
+        "member_shots": {
+            "default": {
+                "shot_name": "default",
+                "frame_start": 1000,
+                "frame_end": 1100,
+                "project_name": "defaults",
+                "tags": [],
+                "user_data": {}
+            }
+        },
+        "date_created": "2023-06-05",
+        "description": null,
+        "user_data": {}
+    },
+    "endless_engines": {
+        "project_name": "endless_engines",
+        "member_shots": {
+            "ee_000_0100": {
+                "shot_name": "ee_000_0100",
+                "frame_start": "1000",
+                "frame_end": "1120",
+                "project_name": "endless_engines",
+                "tags": [],
+                "user_data": {}
+            }
+        },
+        "date_created": "2023-02-11",
+        "description": "challenge",
+        "user_data": {}
+    },
+    "environment_dev": {
+        "project_name": "environment_dev",
+        "member_shots": {
+            "env_000_0100": {
+                "shot_name": "env_000_0100",
+                "frame_start": "1000",
+                "frame_end": "1200",
+                "project_name": "environment_dev",
+                "tags": [],
+                "user_data": {}
+            }
+        },
+        "date_created": "2023-02-16",
+        "description": "environment with solaris",
+        "user_data": {}
+    },
+    "explosion_dev": {
+        "project_name": "explosion_dev",
+        "member_shots": {
+            "ground_explosion": {
+                "shot_name": "ground_explosion",
+                "frame_start": "1000",
+                "frame_end": "1050",
+                "project_name": "explosion_dev",
+                "tags": [],
+                "user_data": {}
+            }
+        },
+        "date_created": "2023-04-27",
+        "description": "None",
+        "user_data": {}
+    },
+    "helicopter": {
+        "project_name": "helicopter",
+        "member_shots": {
+            "_chrProt": {
+                "shot_name": "_chrProt",
+                "frame_start": 1000,
+                "frame_end": 1100,
+                "project_name": "helicopter",
+                "tags": [],
+                "user_data": {}
+            },
+            "_dev": {
+                "shot_name": "_dev",
+                "frame_start": "1000",
+                "frame_end": "1300",
+                "project_name": "helicopter",
+                "tags": [],
+                "user_data": {}
+            },
+            "_envHangar": {
+                "shot_name": "_envHangar",
+                "frame_start": 1000,
+                "frame_end": 1100,
+                "project_name": "helicopter",
+                "tags": [],
+                "user_data": {}
+            },
+            "_layout_seq": {
+                "shot_name": "_layout_seq",
+                "frame_start": 1000,
+                "frame_end": 1100,
+                "project_name": "helicopter",
+                "tags": [],
+                "user_data": {}
+            },
+            "_vhlHelicopter": {
+                "shot_name": "_vhlHelicopter",
+                "frame_start": 1000,
+                "frame_end": 1100,
+                "project_name": "helicopter",
+                "tags": [],
+                "user_data": {}
+            }
+        },
+        "date_created": "2023-05-13",
+        "description": "None",
+        "user_data": {}
+    },
+    "imperial_blade": {
+        "project_name": "imperial_blade",
+        "member_shots": {
+            "_turntable": {
+                "shot_name": "_turntable",
+                "frame_start": "1000",
+                "frame_end": "1200",
+                "project_name": "imperial_blade",
+                "tags": [],
+                "user_data": {}
+            }
+        },
+        "date_created": "2023-02-02",
+        "description": "spaceship asset project_name",
+        "user_data": {}
+    },
+    "minerva": {
+        "project_name": "minerva",
+        "member_shots": {
+            "MIN_000_0100": {
+                "shot_name": "MIN_000_0100",
+                "frame_start": "1000",
+                "frame_end": "1300",
+                "project_name": "minerva",
+                "tags": [],
+                "user_data": {}
+            }
+        },
+        "date_created": "2022-11-28",
+        "description": "kitbash competition",
+        "user_data": {}
+    },
+    "test_new_window": {
+        "project_name": "test_new_window",
+        "member_shots": {
+            "merp": {
+                "shot_name": "merp",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "test_new_window",
+                "tags": ",delivered,ingested",
+                "user_data": {}
+            },
+            "merp12": {
+                "shot_name": "merp12",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "test_new_window",
+                "tags": ",tracked,delivered,ingested,ACTIVE",
+                "user_data": {}
+            },
+            "merp3": {
+                "shot_name": "merp3",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "test_new_window",
+                "tags": ",tracked,delivered,ingested",
+                "user_data": {}
+            },
+            "test23": {
+                "shot_name": "test23",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "test_new_window",
+                "tags": ",tracked,delivered,ingested",
+                "user_data": {}
+            },
+            "test6659": {
+                "shot_name": "test6659",
+                "frame_start": "2340",
+                "frame_end": "1100",
+                "project_name": "test_new_window",
+                "tags": "merp,ingested,tracked,delivered,ingested",
+                "user_data": {}
+            },
+            "test999": {
+                "shot_name": "test999",
+                "frame_start": "920",
+                "frame_end": "1150",
+                "project_name": "test_new_window",
+                "tags": "delivered,ingested",
+                "user_data": {}
+            }
+        },
+        "date_created": "2023-04-23",
+        "description": "None",
+        "user_data": {}
+    },
+    "trees": {
+        "project_name": "trees",
+        "member_shots": {
+            "_speedtree": {
+                "shot_name": "_speedtree",
+                "frame_start": 1000,
+                "frame_end": 1100,
+                "project_name": "trees",
+                "tags": [],
+                "user_data": {}
+            }
+        },
+        "date_created": "2023-05-14",
+        "description": null,
+        "user_data": {}
+    },
+    "wound_wood": {
+        "project_name": "wound_wood",
+        "member_shots": {
+            "WW_025_0005": {
+                "shot_name": "WW_025_0005",
+                "frame_start": "1001",
+                "frame_end": "1249",
+                "project_name": "wound_wood",
+                "tags": ",ingested,first look,creative final,delivered",
+                "user_data": {}
+            },
+            "WW_025_0010": {
+                "shot_name": "WW_025_0010",
+                "frame_start": "1001",
+                "frame_end": "1240",
+                "project_name": "wound_wood",
+                "tags": ",ingested,first look,creative final,delivered",
+                "user_data": {}
+            },
+            "WW_051_0010": {
+                "shot_name": "WW_051_0010",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_058_0015": {
+                "shot_name": "WW_058_0015",
+                "frame_start": "1001",
+                "frame_end": "1598",
+                "project_name": "wound_wood",
+                "tags": ",ingested,tracked",
+                "user_data": {}
+            },
+            "WW_060_0005": {
+                "shot_name": "WW_060_0005",
+                "frame_start": "1001",
+                "frame_end": "1175",
+                "project_name": "wound_wood",
+                "tags": ",ingested",
+                "user_data": {}
+            },
+            "WW_069_0005": {
+                "shot_name": "WW_069_0005",
+                "frame_start": "1001",
+                "frame_end": "1151",
+                "project_name": "wound_wood",
+                "tags": ",ingested,plateb",
+                "user_data": {}
+            },
+            "WW_072_0005": {
+                "shot_name": "WW_072_0005",
+                "frame_start": "1001",
+                "frame_end": "1052",
+                "project_name": "wound_wood",
+                "tags": ",ingested,first look,tracked",
+                "user_data": {}
+            },
+            "WW_072_0015": {
+                "shot_name": "WW_072_0015",
+                "frame_start": "1001",
+                "frame_end": "1091",
+                "project_name": "wound_wood",
+                "tags": ",ingested,first look,tracked",
+                "user_data": {}
+            },
+            "WW_072_0020": {
+                "shot_name": "WW_072_0020",
+                "frame_start": "1001",
+                "frame_end": "1062",
+                "project_name": "wound_wood",
+                "tags": ",ingested,first look,tracked",
+                "user_data": {}
+            },
+            "WW_072_0030": {
+                "shot_name": "WW_072_0030",
+                "frame_start": "1001",
+                "frame_end": "1068",
+                "project_name": "wound_wood",
+                "tags": ",ingested,first look,tracked",
+                "user_data": {}
+            },
+            "WW_072_0040": {
+                "shot_name": "WW_072_0040",
+                "frame_start": "1001",
+                "frame_end": "1077",
+                "project_name": "wound_wood",
+                "tags": ",ingested,first look,tracked",
+                "user_data": {}
+            },
+            "WW_072_0045": {
+                "shot_name": "WW_072_0045",
+                "frame_start": "1001",
+                "frame_end": "1163",
+                "project_name": "wound_wood",
+                "tags": ",ingested,tracked",
+                "user_data": {}
+            },
+            "WW_105_0005": {
+                "shot_name": "WW_105_0005",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": "delete",
+                "user_data": {}
+            },
+            "WW_105_0010": {
+                "shot_name": "WW_105_0010",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_111_0005": {
+                "shot_name": "WW_111_0005",
+                "frame_start": "1001",
+                "frame_end": "1015",
+                "project_name": "wound_wood",
+                "tags": ",ingested,tracked",
+                "user_data": {}
+            },
+            "WW_114_0015": {
+                "shot_name": "WW_114_0015",
+                "frame_start": "1001",
+                "frame_end": "1015",
+                "project_name": "wound_wood",
+                "tags": ",ingested,tracked",
+                "user_data": {}
+            },
+            "WW_127_0005": {
+                "shot_name": "WW_127_0005",
+                "frame_start": "1001",
+                "frame_end": "1525",
+                "project_name": "wound_wood",
+                "tags": ",ingested,tracked,first look,ingested,tracked",
+                "user_data": {}
+            },
+            "WW_135_0005": {
+                "shot_name": "WW_135_0005",
+                "frame_start": "1001",
+                "frame_end": "1030",
+                "project_name": "wound_wood",
+                "tags": ",ingested,tracked,first look",
+                "user_data": {}
+            },
+            "WW_139_0005": {
+                "shot_name": "WW_139_0005",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_139_0010": {
+                "shot_name": "WW_139_0010",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_139_0020": {
+                "shot_name": "WW_139_0020",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_144_0005": {
+                "shot_name": "WW_144_0005",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_144_0010": {
+                "shot_name": "WW_144_0010",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": ",maybe",
+                "user_data": {}
+            },
+            "WW_144_0015": {
+                "shot_name": "WW_144_0015",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_157_0005": {
+                "shot_name": "WW_157_0005",
+                "frame_start": "1001",
+                "frame_end": "1063",
+                "project_name": "wound_wood",
+                "tags": ",ingested,tracked",
+                "user_data": {}
+            },
+            "WW_159_0005": {
+                "shot_name": "WW_159_0005",
+                "frame_start": "1001",
+                "frame_end": "1579",
+                "project_name": "wound_wood",
+                "tags": ",ingested,tracked",
+                "user_data": {}
+            },
+            "WW_159_0010": {
+                "shot_name": "WW_159_0010",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_162_0005": {
+                "shot_name": "WW_162_0005",
+                "frame_start": "1001",
+                "frame_end": "1075",
+                "project_name": "wound_wood",
+                "tags": ",ingested,first look",
+                "user_data": {}
+            },
+            "WW_165_0005": {
+                "shot_name": "WW_165_0005",
+                "frame_start": "1001",
+                "frame_end": "1399",
+                "project_name": "wound_wood",
+                "tags": ",ingested",
+                "user_data": {}
+            },
+            "WW_167_0005": {
+                "shot_name": "WW_167_0005",
+                "frame_start": "1000",
+                "frame_end": "1193",
+                "project_name": "wound_wood",
+                "tags": ",ingested,first look,creative final,CBB NOTES,delivered",
+                "user_data": {}
+            },
+            "WW_173_0025": {
+                "shot_name": "WW_173_0025",
+                "frame_start": "1001",
+                "frame_end": "1110",
+                "project_name": "wound_wood",
+                "tags": ",ingested,tracked",
+                "user_data": {}
+            },
+            "WW_175_0005": {
+                "shot_name": "WW_175_0005",
+                "frame_start": "1001",
+                "frame_end": "1176",
+                "project_name": "wound_wood",
+                "tags": ",ingested,tracked,first look",
+                "user_data": {}
+            },
+            "WW_175_0010": {
+                "shot_name": "WW_175_0010",
+                "frame_start": "1001",
+                "frame_end": "1200",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_182_0005": {
+                "shot_name": "WW_182_0005",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_182_0010": {
+                "shot_name": "WW_182_0010",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_182_0015": {
+                "shot_name": "WW_182_0015",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_182_0020": {
+                "shot_name": "WW_182_0020",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_182_0025": {
+                "shot_name": "WW_182_0025",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_182_0030": {
+                "shot_name": "WW_182_0030",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_182_0035": {
+                "shot_name": "WW_182_0035",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_182_0040": {
+                "shot_name": "WW_182_0040",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_183_0005": {
+                "shot_name": "WW_183_0005",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_183_0010": {
+                "shot_name": "WW_183_0010",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_183_0015": {
+                "shot_name": "WW_183_0015",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_183_0020": {
+                "shot_name": "WW_183_0020",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_183_0025": {
+                "shot_name": "WW_183_0025",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_184_0005": {
+                "shot_name": "WW_184_0005",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_184_0010": {
+                "shot_name": "WW_184_0010",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "WW_184_0015": {
+                "shot_name": "WW_184_0015",
+                "frame_start": "1001",
+                "frame_end": "1288",
+                "project_name": "wound_wood",
+                "tags": "tunnel,ingest,first look",
+                "user_data": {}
+            },
+            "WW_184_0020": {
+                "shot_name": "WW_184_0020",
+                "frame_start": "1001",
+                "frame_end": "1288",
+                "project_name": "wound_wood",
+                "tags": "tunnel,ingest,first look",
+                "user_data": {}
+            },
+            "WW_184_0025": {
+                "shot_name": "WW_184_0025",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": "maybe",
+                "user_data": {}
+            },
+            "WW_191_0005": {
+                "shot_name": "WW_191_0005",
+                "frame_start": "1001",
+                "frame_end": "1119",
+                "project_name": "wound_wood",
+                "tags": ",ingested,first look,creative final,delivered",
+                "user_data": {}
+            },
+            "WW_191_0010": {
+                "shot_name": "WW_191_0010",
+                "frame_start": "1001",
+                "frame_end": "1402",
+                "project_name": "wound_wood",
+                "tags": ",ingested,first look,creative final,delivered",
+                "user_data": {}
+            },
+            "_dev_facetracker": {
+                "shot_name": "_dev_facetracker",
+                "frame_start": "1000",
+                "frame_end": "1200",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "_dev_tunnel": {
+                "shot_name": "_dev_tunnel",
+                "frame_start": "1000",
+                "frame_end": "1576",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "_seq": {
+                "shot_name": "_seq",
+                "frame_start": "1000",
+                "frame_end": "2000",
+                "project_name": "wound_wood",
+                "tags": [],
+                "user_data": {}
+            },
+            "first look": {
+                "shot_name": "first look",
+                "frame_start": "1000",
+                "frame_end": "1100",
+                "project_name": "wound_wood",
+                "tags": "None",
+                "user_data": {}
+            }
+        },
+        "date_created": "2023-01-07",
+        "description": "wound wood film project_name",
+        "user_data": {}
+    }
+}
