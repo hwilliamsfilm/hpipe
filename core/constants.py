@@ -1,15 +1,16 @@
 """
 Constants for database
 """
-from core.hutils import system
+# from core.hutils import system
 import logging
+from core.hutils import system
 
 # GENERAL CONSTANTS
 LOG_LEVEL = logging.DEBUG
 
 # General constants
-PROJECTS_ROOT = path.convertPath('Y:/projects/')
-ARCHIVE_ROOT = path.convertPath('Y:/projects/_archive/')
+PROJECTS_ROOT = system.Filepath('Y:/projects/').system_path()
+ARCHIVE_ROOT = system.Filepath('Y:/projects/_archive/').system_path()
 
 # Directory structure
 PROJECT_STRUCTURE = {
@@ -41,11 +42,6 @@ SHOT_STRUCTURE = {
     }
 }
 
-
-'''
-Constants / defaults for Shot Class
-'''
-
 FRAME_START = 1000
 FRAME_END = 1100
 
@@ -60,19 +56,16 @@ RENDER_FOLDER = 'render'
 NUKE_FOLDER = 'nuke'
 WORKING_FOLDER = 'working_files'
 
-from core.hutils import system
-
 # PATH CONSTANTS
-DB_PATH = path.convertPath(path.fix_path(r'Y:/project_db/projects_refactor.json'))
-DB_BACKUP = path.convertPath(path.fix_path(r'Y:/vault/db_backup'))
+DB_PATH = system.Filepath(r'Y:/project_db/projects_refactor.json').system_path()
+DB_BACKUP = system.Filepath(r'Y:/vault/db_backup').system_path()
 
 # Database constants
 DB_TYPE = 'json'
 
 # LIBRARY CONSTANTS
-USD_LIB = path.convertPath(path.fix_path(r'Y:/_global_assets/usd'))
-
-SHOT_FOLDER = 'shots'
-PLATE_FOLDER = 'plate'
-
+USD_LIB = system.Filepath(r'Y:/_global_assets/usd').system_path()
+#
+# SHOT_FOLDER = 'shots'
+# PLATE_FOLDER = 'plate'
 

@@ -4,26 +4,12 @@ This module contains functions for dealing with file paths.
 import os
 import platform
 from enum import Enum
+from assets import asset
+from core.hutils import path
 
-
-def fix_path(old_path: str, seperator: str = '/') -> str:
-    """
-    Fixes a path to be the correct format for the current OS
-    :param old_path: Path to fix
-    :param seperator: Seperator to use for the path
-    :return: Fixed path
-    """
-    _path = old_path.replace('\\', '/')
-    _path = _path.replace('\\\\', '/')
-    _path = _path.replace('//', '/')
-
-    if _path.endswith('/'):
-        _path = _path[:-1]
-
-    _path = _path.replace('/', seperator)
-
-    new_path = _path
-    return new_path
+LINUX_ROOT = r'/mnt/share/hlw01/'
+WINDOWS_ROOT = r'Y:/'
+OSX_ROOT = r'/Volumes/hlw01/'
 
 
 class System(Enum):
@@ -40,17 +26,17 @@ class Filepath:
     """
 
     def __init__(self, filepath_path: str, filepath_name: str = ''):
-        self.filepath_path = fix_path(filepath_path)
+        self.filepath_path = path.fix_path(filepath_path)
         if filepath_name == '':
             filepath_name = os.path.basename(filepath_path)
         self.filepath_name = filepath_name
         self.basename = os.path.basename(filepath_path)
         self.extension = os.path.splitext(filepath_path)[1]
-        self.linux_root = '/mnt/share/hlw01/'
-        self.windows_root = r'Y:\\'
-        self.osx_root = '/Volumes/hlw01/'
         self.system = self.get_system()
         self.system_root = self.get_root()
+
+    def __repr__(self):
+        return f'Filepath({self.filepath_path})'
 
     def has_frame_number(self) -> bool:
         """
@@ -81,12 +67,11 @@ class Filepath:
         """
         Returns the current system
         """
-
-        if self.linux_root in self.filepath_path:
+        if LINUX_ROOT in self.filepath_path:
             return System.LINUX
-        if self.windows_root in self.filepath_path:
+        if WINDOWS_ROOT in self.filepath_path:
             return System.WINDOWS
-        if self.osx_root in self.filepath_path:
+        if OSX_ROOT in self.filepath_path:
             return System.OSX
         raise ValueError('Filepath does not contain a valid system root.')
 
@@ -95,11 +80,11 @@ class Filepath:
         Returns the root path for the current system
         """
         if self.system == System.LINUX:
-            return self.linux_root
+            return LINUX_ROOT
         if self.system == System.WINDOWS:
-            return self.windows_root
+            return WINDOWS_ROOT
         if self.system == System.OSX:
-            return self.osx_root
+            return OSX_ROOT
         raise ValueError('Filepath does not contain a valid system root.')
 
     def system_path(self) -> str:
@@ -124,6 +109,13 @@ class Filepath:
         else:
             return ''
 
+    def get_parent_directory(self) -> asset.Directory:
+        """
+        Returns the parent directory of a file path
+        """
+        parent_directory = os.path.dirname(self.filepath_path)
+        return asset.Directory(parent_directory)
+
 
 class SystemConfig:
     """
@@ -132,9 +124,6 @@ class SystemConfig:
     def __init__(self):
         self.system = self.get_system()
         self.root = self.get_root()
-        self.linux_root = '/mnt/share/hlw01/'
-        self.windows_root = r'Y:\\'
-        self.osx_root = '/Volumes/hlw01/'
         self.system_root = self.get_root()
 
     @staticmethod
@@ -157,11 +146,11 @@ class SystemConfig:
         Returns the root path for the current system
         """
         if self.system == System.LINUX:
-            return self.linux_root
+            return LINUX_ROOT
         if self.system == System.WINDOWS:
-            return self.windows_root
+            return WINDOWS_ROOT
         if self.system == System.OSX:
-            return self.osx_root
+            return OSX_ROOT
         raise ValueError('Filepath does not contain a valid system root.')
 
 

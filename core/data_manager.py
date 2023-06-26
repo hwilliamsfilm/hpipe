@@ -6,8 +6,8 @@ argument for the ProjectDataManager class.
 """
 
 from abc import ABC, abstractmethod
-from core import project, shot
-from core.hutils import constants, logger
+from core import project, shot, constants
+from core.hutils import logger
 import json
 import os
 
@@ -125,6 +125,9 @@ class ProjectDataManager:
         Saves the current state of our data to the database via the specific implementation of the DataAccessor.
         :return: True if successful
         """
+        for project in self.get_projects():
+            self.update_project(project, push=False)
+
         return self.accessor.save_data(self.data)
 
     def get_projects(self) -> list[project.Project]:

@@ -3,6 +3,8 @@ Some customizations and basic utility functions on top of logging module.
 """
 import logging
 from colorlog import ColoredFormatter
+from functools import wraps
+import time
 
 
 FORMAT = "%(asctime)s::%(levelname)s-%(funcName)s | %(message)s"
@@ -27,3 +29,16 @@ def setup_logger() -> logging.Logger:
     log.setLevel(LOG_LEVEL)
     log.addHandler(stream)
     return log
+
+
+def timeit(func):
+    @wraps(func)
+    def timeit_wrapper(*args, **kwargs):
+        log = setup_logger()
+        start_time = time.perf_counter()
+        result = func(*args, **kwargs)
+        end_time = time.perf_counter()
+        total_time = end_time - start_time
+        log.info(f'Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds')
+        return result
+    return timeit_wrapper

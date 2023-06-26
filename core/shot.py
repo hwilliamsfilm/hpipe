@@ -4,7 +4,7 @@ with the file system and database. This class is meant to be used with the proje
 for this is that the project class is used to infer certain properties of the shot class such as the base path. Not
 using inheritance because shots can be used outside the project class.
 """
-
+from assets import asset, imageSequence
 import core.constants as constants
 from core.hutils import logger
 
@@ -96,12 +96,13 @@ class Shot:
         # return self.get_shot_path() + '/output/' + '_workarea/'
         return f"{self.base_path}/{constants.OUTPUT_FOLDER}/{constants.WORKAREA_FOLDER}/"
 
-    def get_comps_path(self) -> str:
+    def get_comps_path(self) -> 'asset.Directory':
         """
         Returns the path of the comps' folder
         :return: str comps path
         """
-        return f"{self.base_path}/{constants.OUTPUT_FOLDER}/{constants.COMP_FOLDER}/"
+        comps_path = asset.Directory(f"{self.base_path}/{self.name}/{constants.OUTPUT_FOLDER}/{constants.COMP_FOLDER}/")
+        return comps_path
 
     def get_render_path(self):
         """
@@ -132,13 +133,13 @@ class Shot:
         """
         return self.tags
 
-    def get_comps(self) -> list[str]:
+    def get_comps(self) -> list['imageSequence.GenericImageSequence']:
         """
-        Returns the comps contained in the comps' folder
-        :return: list[str] comps
+        Get list of comps for the project
+        :return: list of comps
         """
-        # FIXME: Need to use factory pattern to return image sequence objects
-        raise NotImplementedError
+        comp_sequences = imageSequence.sequences_from_directory(self.get_comps_path())
+        return comp_sequences
 
     def get_plates(self) -> list[str]:
         """
@@ -206,8 +207,17 @@ class Shot:
         shot_name = shot_dictionary['shot_name']
         frame_start = shot_dictionary['frame_start']
         frame_end = shot_dictionary['frame_end']
-        tags = shot_dictionary['tags']
-        user_data = shot_dictionary['user_data']
+        user_data: Union[Dict[Any, Any], None]
+        if not shot_dictionary.get('user_data'):
+            user_data = {}
+        else:
+            user_data = shot_dictionary['user_data']
+
+        tags: list[str]
+        if not shot_dictionary.get('tags'):
+            tags = []
+        else:
+            tags = shot_dictionary['tags']
 
         shot = cls(shot_name=shot_name, project_instance=parent_project, frame_start=frame_start,
                    frame_end=frame_end, tags=tags, user_data=user_data)

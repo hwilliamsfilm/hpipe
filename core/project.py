@@ -5,6 +5,7 @@ with the file system and database.
 
 from core.hutils import logger, manager_utils
 from core import shot
+from assets import asset, imageSequence
 import core.constants as constants
 from typing import *
 
@@ -177,7 +178,11 @@ class Project:
         date_created = project_dictionary['date_created']
         description = project_dictionary['description']
         shots = project_dictionary['member_shots']
-        user_data = project_dictionary['user_data']
+        user_data: Union[Dict[Any, Any], None]
+        if not project_dictionary.get('user_data'):
+            user_data = {}
+        else:
+            user_data = project_dictionary['user_data']
 
         project = cls(project_name, date_created, description, shots, user_data)
         return project
