@@ -18,7 +18,7 @@ class GenericProjectFile(asset.Asset):
         self.filepath = filepath
 
     def __repr__(self) -> str:
-        return f"ProjectFile <{self.asset_name}> from " \
+        return f"ProjectFile <{self.filepath}> from " \
                f"<{self.filepath.get_parent_directory()}>"
 
 
@@ -30,7 +30,7 @@ class HoudiniProjectFile(GenericProjectFile):
         super().__init__(filepath, asset_name)
 
     def __repr__(self) -> str:
-        return f"HoudiniProjectFile <{self.asset_name}> from " \
+        return f"HoudiniProjectFile <{self.filepath}> from " \
                f"<{self.filepath.get_parent_directory()}>"
 
 
@@ -42,7 +42,7 @@ class NukeProjectFile(GenericProjectFile):
         super().__init__(filepath, asset_name)
 
     def __repr__(self) -> str:
-        return f"NukeProjectFile <{self.asset_name}> from " \
+        return f"NukeProjectFile <{self.filepath}> from " \
                f"<{self.filepath.get_parent_directory()}>"
 
 
