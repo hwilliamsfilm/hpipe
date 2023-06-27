@@ -32,7 +32,7 @@ class Filepath:
         self.filepath_name = filepath_name
         self.basename = os.path.basename(filepath_path)
         self.extension = os.path.splitext(filepath_path)[1]
-        self.system = self.get_system()
+        self.system = self.get_path_system()
         self.system_root = self.get_root()
 
     def __repr__(self):
@@ -55,15 +55,15 @@ class Filepath:
 
     def get_frame_number(self) -> int:
         """
-        Gets the frame number from the filepath.
+        Gets the frame number from the filepath. The format is assumed to be: name_####.ext
         :return: frame number
         """
         if not self.has_frame_number():
             return -1
+        frame_number: int = int(self.basename.split('_')[-1].split('.')[0])
+        return frame_number
 
-        return 1
-
-    def get_system(self) -> System:
+    def get_path_system(self) -> System:
         """
         Returns the current system
         """

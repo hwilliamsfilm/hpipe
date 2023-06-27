@@ -3,7 +3,7 @@ from core.hutils import logger
 from core import constants
 
 log = logger.setup_logger()
-log.debug("data_manager.py loaded")
+log.debug("project_db_test.py loaded")
 
 
 class ProjectDbTest:
@@ -52,8 +52,13 @@ class ProjectDbTest:
         example_project = self.db.get_project('wound_wood')
         example_shot = example_project.get_shot('WW_072_0040')
         comps = example_shot.get_comps()
+        plates = example_shot.get_plates()
+
         log.debug(f"Loaded {comps} comps")
-        return comps
+        log.debug(f"for example, Comp: {comps[0]}")
+        log.debug(f"with file path: {comps[0].filepaths}")
+
+        return comps, plates
 
 
 if __name__ == '__main__':

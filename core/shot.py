@@ -80,13 +80,14 @@ class Shot:
         """
         return f"{self.base_path}/{self.name}"
 
-    def get_plate_path(self) -> str:
+    def get_plate_path(self) -> 'asset.Directory':
         """
         Returns the path of the plate folder
         :return: str plate path
         """
-        # return self.get_shot_path() + '/plate/'
-        return f"{self.base_path}/{constants.PLATE_FOLDER}/"
+        plate_path = asset.Directory(
+            f"{self.base_path}/{self.name}/{constants.PLATE_FOLDER}/")
+        return plate_path
 
     def get_workarea_path(self) -> str:
         """
@@ -101,7 +102,8 @@ class Shot:
         Returns the path of the comps' folder
         :return: str comps path
         """
-        comps_path = asset.Directory(f"{self.base_path}/{self.name}/{constants.OUTPUT_FOLDER}/{constants.COMP_FOLDER}/")
+        comps_path = asset.Directory(
+            f"{self.base_path}/{self.name}/{constants.OUTPUT_FOLDER}/{constants.COMP_FOLDER}/")
         return comps_path
 
     def get_render_path(self):
@@ -141,13 +143,13 @@ class Shot:
         comp_sequences = imageSequence.sequences_from_directory(self.get_comps_path())
         return comp_sequences
 
-    def get_plates(self) -> list[str]:
+    def get_plates(self) -> list['imageSequence.GenericImageSequence']:
         """
         Returns the plates contained in the plate folder.
         :return: list[str] plates
         """
-        # FIXME: Need to use factory pattern to return image sequence objects
-        raise NotImplementedError
+        plate_sequences = imageSequence.sequences_from_directory(self.get_plate_path())
+        return plate_sequences
 
     def get_work(self) -> list[str]:
         """
