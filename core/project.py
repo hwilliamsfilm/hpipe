@@ -161,13 +161,6 @@ class Project:
             shot_dictionary[shot_instance.name] = shot_instance.to_dict()
         return shot_dictionary
 
-#
-    project_name: str
-    date_created: str
-    description: str
-    member_shots: Union[Dict[str, Any], None]
-    user_data: Union[Dict[Any, Any], None]
-
     @classmethod
     def from_dict(cls, project_dictionary: ProjectDict) -> 'Project':
         """
