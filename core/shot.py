@@ -4,9 +4,9 @@ with the file system and database. This class is meant to be used with the proje
 for this is that the project class is used to infer certain properties of the shot class such as the base path. Not
 using inheritance because shots can be used outside the project class.
 """
-from assets import asset, imageSequence
+from assets import asset, imageSequence, projectFile
 import core.constants as constants
-from core.hutils import logger
+from core.hutils import logger, system
 
 from typing import *
 if TYPE_CHECKING:
@@ -80,12 +80,12 @@ class Shot:
         """
         return f"{self.base_path}/{self.name}"
 
-    def get_plate_path(self) -> 'asset.Directory':
+    def get_plate_path(self) -> 'system.Directory':
         """
         Returns the path of the plate folder
         :return: str plate path
         """
-        plate_path = asset.Directory(
+        plate_path = system.Directory(
             f"{self.base_path}/{self.name}/{constants.PLATE_FOLDER}/")
         return plate_path
 
@@ -97,12 +97,12 @@ class Shot:
         # return self.get_shot_path() + '/output/' + '_workarea/'
         return f"{self.base_path}/{constants.OUTPUT_FOLDER}/{constants.WORKAREA_FOLDER}/"
 
-    def get_comps_path(self) -> 'asset.Directory':
+    def get_comps_path(self) -> 'system.Directory':
         """
         Returns the path of the comps' folder
         :return: str comps path
         """
-        comps_path = asset.Directory(
+        comps_path = system.Directory(
             f"{self.base_path}/{self.name}/{constants.OUTPUT_FOLDER}/{constants.COMP_FOLDER}/")
         return comps_path
 
@@ -118,15 +118,18 @@ class Shot:
         Returns the path of the nuke folder
         :return: str nuke scripts path
         """
-        # return self.get_shot_path() + '/working_files/' + 'nuke/'
-        return f"{self.base_path}/{constants.WORKING_FOLDER}/{constants.NUKE_FOLDER}/"
+        nuke_path = system.Directory(
+            f"{self.base_path}/{self.name}/{constants.WORKING_FOLDER}/{constants.NUKE_FOLDER}/")
+        return nuke_path
 
     def get_houdini_path(self):
         """
         Returns the path of the houdini folder
         :return: str houdini scripts path
         """
-        return self.get_shot_path() + '/working_files/' + 'houdini/'
+        houdini_path = system.Directory(
+            f"{self.base_path}/{self.name}/{constants.WORKING_FOLDER}/{constants.HOUDINI_FOLDER}/")
+        return houdini_path
 
     def get_tags(self) -> list[str]:
         """
@@ -151,24 +154,16 @@ class Shot:
         plate_sequences = imageSequence.sequences_from_directory(self.get_plate_path())
         return plate_sequences
 
-    def get_work(self) -> list[str]:
-        """
-        Returns the work contained in the workarea folder.
-        :return: list[str] work
-        """
-        # FIXME: Need to use factory pattern to return image sequence objects. Also not clear what "work" is.
-        # dir = self.get_workarea_path()
-        # return path.get_image_dirs(dir)
-        raise NotImplementedError
-
-    def get_project_files(self) -> list[str]:
+    def get_project_files(self) -> list[projectFile.GenericProjectFile]:
         """
         Returns the project files contained in the nuke and houdini folders.
         :return: list[str] project files
         """
-        # FIXME: Need to use factory pattern to general ProjectFile objects
-        # return nuke_files + houdini_files
-        raise NotImplementedError
+        nuke_path =self.get_nuke_path()
+        houdini_path = self.get_houdini_path()
+        nuke_files = projectFile.project_files_from_directory(nuke_path)
+        houdini_files = projectFile.project_files_from_directory(houdini_path)
+        return nuke_files + houdini_files
 
     def get_renders(self) -> list[str]:
         """
@@ -183,11 +178,6 @@ class Shot:
         :return: list[str] assets
         """
         raise NotImplementedError
-
-    def link_project(self, project_instance: 'project.Project') -> bool:
-        # FIXME: I should probably not support this.
-        self.project = project_instance
-        return True
 
     def add_tag(self, tag) -> bool:
         self.tags.append(tag)
@@ -215,7 +205,7 @@ class Shot:
         else:
             user_data = shot_dictionary['user_data']
 
-        tags: list[str]
+        tags: Union[list[str], None]
         if not shot_dictionary.get('tags'):
             tags = []
         else:

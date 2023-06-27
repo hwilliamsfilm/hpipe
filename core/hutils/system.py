@@ -18,6 +18,29 @@ class System(Enum):
     LINUX = 'linux'
 
 
+class Directory:
+    """
+    Base class for a directory on disk. This class is meant to be very generic and only describe the most basic
+    properties of a directory. It is meant to be subclassed to create more specific directory types.
+    """
+    def __init__(self, directory_path: str, directory_name: str = ''):
+        self.directory_path = path.fix_path(directory_path)
+        if directory_name == '':
+            directory_name = os.path.basename(directory_path)
+        self.directory_name = directory_name
+
+    def get_files(self) -> list['Filepath']:
+        """
+        Returns a list of all files in the directory.
+        """
+        directory_files: list[Filepath] = []
+        for root, dirs, files in os.walk(self.directory_path):
+            for file in files:
+                directory_files.append(Filepath(os.path.join(root, file)))
+
+        return directory_files
+
+
 class Filepath:
     """
     Base class for a filepath. This class is meant to be very generic and only describe the most basic
@@ -109,12 +132,12 @@ class Filepath:
         else:
             return ''
 
-    def get_parent_directory(self) -> asset.Directory:
+    def get_parent_directory(self) -> Directory:
         """
         Returns the parent directory of a file path
         """
         parent_directory = os.path.dirname(self.filepath_path)
-        return asset.Directory(parent_directory)
+        return Directory(parent_directory)
 
 
 class SystemConfig:
@@ -152,32 +175,3 @@ class SystemConfig:
         if self.system == System.OSX:
             return OSX_ROOT
         raise ValueError('Filepath does not contain a valid system root.')
-
-
-def verify_directory(directory, create_if_not=False, verbose=False):
-    """
-    Checks if directory exists, if not, can optionally create it.
-    :param directory: str directory to check
-    :param create_if_not: bool create directory if it doesn't exist
-    :param verbose: bool print out info
-    :return: str directory path
-    """
-    # fix path
-    directory = fix_path(directory)
-
-    # check if directory exists
-    if not os.path.exists(directory):
-        # if not, check if we should create it
-        if create_if_not:
-            # create directory
-            os.makedirs(directory)
-        else:
-            # otherwise, raise error if verbose
-            if verbose:
-                raise IOError('Directory does not exist: %s' % directory)
-            else:
-                return None
-
-    else:
-        # if directory exists, return it
-        return directory

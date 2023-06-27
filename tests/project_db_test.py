@@ -16,6 +16,7 @@ class ProjectDbTest:
         self.load_projects()
         self.save_db()
         self.get_comps()
+        self.get_project_files()
 
     @staticmethod
     @logger.timeit
@@ -59,6 +60,19 @@ class ProjectDbTest:
         log.debug(f"with file path: {comps[0].filepaths}")
 
         return comps, plates
+
+    @logger.timeit
+    def get_project_files(self):
+        """
+        Gets all files in the project database
+        """
+        example_project = self.db.get_project('wound_wood')
+        example_shot = example_project.get_shot('WW_072_0040')
+        files = example_shot.get_project_files()
+        log.debug(f"Loaded {files} files")
+        log.debug(f"for example, File: {files[0]}")
+        log.debug(f"with file path: {files[0].filepath}")
+        return files
 
 
 if __name__ == '__main__':

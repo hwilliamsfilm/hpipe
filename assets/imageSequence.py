@@ -58,7 +58,7 @@ class GenericImageSequence(asset.Asset):
         """
         return self.end_frame - self.start_frame + 1
 
-    def get_parent_directory(self) -> 'asset.Directory':
+    def get_parent_directory(self) -> 'system.Directory':
         """
         Returns the parent directory of the image sequence.
         """
@@ -132,7 +132,7 @@ def sequence_factory(file_paths: list['system.Filepath'], file_name: str = '') -
         raise ValueError(f"Could not create image sequence from {file_paths}.")
 
 
-def sequences_from_directory(directory: asset.Directory) -> list[GenericImageSequence]:
+def sequences_from_directory(directory: system.Directory) -> list[GenericImageSequence]:
     """
     Returns a list of image sequences from a directory. We assume that within the directory, there are subdirectories
     that contain image sequences. So each subdirectory is a version where multiple image sequences are stored.

@@ -55,6 +55,7 @@ COMP_FOLDER = 'comp'
 RENDER_FOLDER = 'render'
 NUKE_FOLDER = 'nuke'
 WORKING_FOLDER = 'working_files'
+HOUDINI_FOLDER = 'houdini'
 
 # PATH CONSTANTS
 DB_PATH = system.Filepath(r'Y:/project_db/projects_refactor.json').system_path()
