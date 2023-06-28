@@ -1,4 +1,5 @@
-from core import data_manager
+from assets import imageSequence, projectFile
+from core import data_manager, project, shot
 from core.hutils import logger
 from core import constants
 
@@ -13,10 +14,11 @@ class ProjectDbTest:
     def __init__(self):
         constants.DB_PATH = './tests/test_db.json'
         self.db = self.create_project_db()
-        self.load_projects()
-        self.save_db()
-        self.get_comps()
-        self.get_project_files()
+        self.load_projects_pass = self.load_projects()
+        self.save_db_pass = self.save_db()
+        self.get_comps_pass = self.get_comps()
+        self.get_project_files_pass = self.get_project_files()
+        self.log_tests()
 
     @staticmethod
     @logger.timeit
@@ -28,14 +30,19 @@ class ProjectDbTest:
         return data_manager.ProjectDataManager()
 
     @logger.timeit
-    def load_projects(self):
+    def load_projects(self) -> bool:
         """
         Loads all projects in the project database
         """
         projects = self.db.get_projects()
-        log.debug(f"Loaded {len(projects)} projects")
-        log.debug(f"for example, Project: {projects[3]}")
-        return projects
+        has_projects = len(projects) > 0
+        is_project = isinstance(projects[0], project.Project)
+        has_shots = len(projects[0].get_shots()) > 0
+        is_shot = isinstance(projects[0].get_shots()[0], shot.Shot)
+        if has_projects and is_project and has_shots and is_shot:
+            return True
+        else:
+            return False
 
     @logger.timeit
     def save_db(self):
@@ -46,7 +53,7 @@ class ProjectDbTest:
         self.db.save()
 
     @logger.timeit
-    def get_comps(self):
+    def get_comps(self) -> bool:
         """
         Gets all comps in the project database
         """
@@ -55,11 +62,14 @@ class ProjectDbTest:
         comps = example_shot.get_comps()
         plates = example_shot.get_plates()
 
-        log.debug(f"Loaded {comps} comps")
-        log.debug(f"for example, Comp: {comps[0]}")
-        log.debug(f"with file path: {comps[0].filepaths}")
-
-        return comps, plates
+        has_comps = len(comps) > 0
+        is_comp = isinstance(comps[0], imageSequence.GenericImageSequence)
+        has_plates = len(plates) > 0
+        is_plate = isinstance(plates[0], imageSequence.GenericImageSequence)
+        if has_comps and is_comp and has_plates and is_plate:
+            return True
+        else:
+            return False
 
     @logger.timeit
     def get_project_files(self):
@@ -69,10 +79,21 @@ class ProjectDbTest:
         example_project = self.db.get_project('wound_wood')
         example_shot = example_project.get_shot('WW_072_0040')
         files = example_shot.get_project_files()
-        log.debug(f"Loaded {files} files")
-        log.debug(f"for example, File: {files[0]}")
-        log.debug(f"with file path: {files[0].filepath}")
-        return files
+        has_files = len(files) > 0
+        is_file = isinstance(files[0], projectFile.GenericProjectFile)
+        if has_files and is_file:
+            return True
+        else:
+            return False
+
+    def log_tests(self):
+        """
+        Logs the results of the tests
+        """
+        log.info(f"------ TESTS: Load projects: ----- {self.load_projects_pass}")
+        log.info(f"------ TESTS: Save db ------------ {self.save_db_pass}")
+        log.info(f"------ TESTS: Get comps ---------- {self.get_comps_pass}")
+        log.info(f"------ TESTS: Get project files--- {self.get_project_files_pass}")
 
 
 if __name__ == '__main__':
