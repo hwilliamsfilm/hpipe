@@ -52,6 +52,12 @@ class GenericImageSequence(asset.Asset):
             return -1
         return self.filepaths[-1].get_frame_number()
 
+    def get_extension(self) -> str:
+        """
+        Returns the extension of the image sequence.
+        """
+        return self.filepaths[0].get_extension()
+
     def get_total_frames(self) -> int:
         """
         Returns the total number of frames in the image sequence.
@@ -66,6 +72,14 @@ class GenericImageSequence(asset.Asset):
             raise ValueError("Image sequence has no parent directory.")
         return self.filepaths[0].get_parent_directory()
 
+    def get_basename(self) -> str:
+        """
+        Returns the basename of the image sequence.
+        """
+        if len(self.filepaths) == 0:
+            raise ValueError("Image sequence has no basename.")
+        return self.filepaths[0].get_filename()
+
     def sort_filepaths(self) -> bool:
         """
         Sorts the filepaths in the image sequence by frame number.
@@ -73,6 +87,25 @@ class GenericImageSequence(asset.Asset):
         """
         self.filepaths.sort(key=lambda x: x.get_frame_number())
         return True
+
+    def to_mp4(self, target_directory: 'system.Directory' = system.Directory(r'.//')) -> 'system.Filepath':
+        """
+        Converts the image sequence to an mp4 video.
+        """
+
+        if target_directory.directory_path == '.' or target_directory.directory_path == './':
+            target_directory = self.get_parent_directory().get_parent_directory()
+
+        log.info(target_directory.directory_path)
+        target_file = system.Filepath(f"{target_directory.directory_path}/{self.get_basename()}.mp4")
+
+        if os.path.exists(target_file.filepath_path):
+            log.warning(f"File already exists: {target_file}")
+            return target_file
+
+        sequence_to_video(self, target_file)
+
+        return target_file
 
 
 class ExrImageSequence(GenericImageSequence):
@@ -86,6 +119,9 @@ class ExrImageSequence(GenericImageSequence):
     def __repr__(self) -> str:
         return f"EXR ImageSequence {self.get_start_frame()}-{self.get_end_frame()} @ <{self.asset_name}> " \
                f"from <{self.get_parent_directory().directory_path}>"
+
+    def to_mp4(self, target_directory: 'system.Directory' = system.Directory(r'.//')) -> 'system.Filepath':
+        raise NotImplementedError("EXR to MP4 conversion not implemented yet.")
 
 
 class JpgImageSequence(GenericImageSequence):
@@ -171,3 +207,42 @@ def sequences_from_directory(directory: system.Directory) -> list[GenericImageSe
 
     return directory_sequences
 
+
+def sequence_to_video(image_sequence: 'GenericImageSequence', output_path: 'system.Filepath') -> bool:
+    """
+    Converts the image sequence to a video.
+    :param image_sequence: Image sequence to convert
+    :param output_path: Output path for the video
+    :return: True if successful, False if not
+    """
+
+    import ffmpeg  # type: ignore
+
+    first_image = image_sequence.filepaths[0]
+    root = first_image.get_parent_directory().directory_path
+    filename = '_'.join(first_image.basename.split('_')[:-1])
+
+    start_frame = image_sequence.get_start_frame()
+
+    ffmpeg_path = '{root}/{filename}_%04d.{extension}'.format(root=root, filename=filename,
+                                                              extension=image_sequence.get_extension())
+
+    stream = ffmpeg.input(ffmpeg_path, framerate=24, start_number=start_frame)
+
+    if image_sequence.get_extension() == 'png' or image_sequence.get_extension() == 'jpg':
+        pad = {
+            'width': 'ceil(iw/2)*2',
+            'height': 'ceil(ih/2)*2'
+        }
+        stream = ffmpeg.filter_(stream, 'pad', **pad)
+        stream = ffmpeg.filter_(stream, 'format', 'yuv420p')
+
+    stream = ffmpeg.output(stream, output_path.filepath_path, video_bitrate="15M")
+
+    try:
+        ffmpeg.run(stream)
+    except ffmpeg.Error as e:
+        log.error(e.stderr)
+        return False
+
+    return True

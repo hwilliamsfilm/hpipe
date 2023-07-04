@@ -5,53 +5,18 @@ returns the appropriate data accessor based on the current configuration. In the
 argument for the ProjectDataManager class.
 """
 
-from abc import ABC, abstractmethod
 from core import project, shot, constants
 from core.hutils import logger
 import json
 import os
+from typing import *
 
 
 log = logger.setup_logger()
 log.debug("data_manager.py loaded")
 
 
-class AbstractDataAccessor(ABC):
-    """
-    Abstract class for data accessors. This is the primary interface for the Projects database.
-    """
-
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def get_data(self) -> dict:
-        """
-        Gets the database data and returns it as a dictionary.
-        :return: dictionary of database data
-        """
-        pass
-
-    @abstractmethod
-    def save_data(self, data: dict) -> bool:
-        """
-        Saves the database data to disk.
-        :param dict data: dictionary of database data
-        :return: True if successful
-        """
-        pass
-
-    @abstractmethod
-    def backup(self, increment: bool = True) -> bool:
-        """
-        Backs up the database to a json file in the backup directory.
-        param increment: bool whether to increment the backup file name
-        :return: True if successful
-        """
-        pass
-
-
-class JsonDataAccessor(AbstractDataAccessor):
+class JsonDataAccessor:
     """
     Json data accessor subclass of AbstractDataAccessor. This is used as the primary interface for the
     Project's database via json.
@@ -94,7 +59,7 @@ class JsonDataAccessor(AbstractDataAccessor):
         raise NotImplementedError("Backup not implemented yet")
 
 
-def _get_data_accessor() -> AbstractDataAccessor:
+def _get_data_accessor() -> JsonDataAccessor:
     """
     Factory method for data accessor. Returns the appropriate data accessor based on the config.
     :return: AbstractDataAccessor subclass
@@ -287,3 +252,113 @@ class ProjectDataManager:
         be backed up to json. If it's json, it will be backed up to json.
         """
         return self.accessor.backup(increment=True)
+
+
+class DirectoryGenerator:
+    """
+    Generates directory structures for projects and shots.
+    """
+    def __init__(self, project_instance: Union[project.Project, None] = None,
+                 shot_instance: Union[shot.Shot, None] = None, push_directories: bool = False):
+
+        if not project_instance and not shot_instance:
+            raise ValueError("Either a project or shot instance must be provided.")
+
+        self.project_structure: dict[Any, Dict[Any, Any]] = constants.PROJECT_STRUCTURE.copy()
+        self.shot_structure: dict[Any, Dict[Any, Any]] = constants.SHOT_STRUCTURE.copy()
+
+        if project_instance and not shot_instance:
+            self.project = project_instance
+            self.set_project_directories()
+            if push_directories:
+                self.push_project_directories()
+
+        if shot_instance and not project_instance:
+            self.shot = shot_instance
+            self.project = self.shot.project
+            self.set_shot_directories(shot_instance)
+
+    def set_project_directories(self) -> bool:
+        """
+        Generates the directories for a project instance.
+        :return: True if successful
+        """
+        root_constant = constants.PROJECTS_ROOT
+
+        project_name = self.project.name
+        year = self.project.year
+
+        project_path = f'{root_constant}/{year}/{project_name}'
+        self.project_structure[project_path] = self.project_structure.pop("name")
+
+        for key, value in self.project_structure[project_path].items():
+            self.project_structure[project_path][key] = f"{project_path}/{key}"
+
+        log.info(f"Generating directories for project {project_name}")
+        log.info(f"Project structure: {self.project_structure}")
+
+        _generate_directories(self.project_structure)
+
+        return True
+
+    def push_project_directories(self) -> bool:
+        """
+        Verifies the directories for a project instance.
+        :return: True if successful
+        """
+        if not len(self.project.get_shots()) > 1:
+            log.debug(f"Project {self.project.name} has no shots. Skipping verification.")
+            return False
+
+        for shot_instance in self.project.get_shots():
+            self.shot = shot_instance
+            self.project = self.shot.project
+            self.set_shot_directories(shot_instance)
+
+        return True
+
+    def set_shot_directories(self, shot_instance: shot.Shot) -> bool:
+        """
+        Generates the directories for a shot instance.
+        :return: True if successful
+        """
+        root_constant = constants.PROJECTS_ROOT
+        self.shot_structure = constants.SHOT_STRUCTURE.copy()
+
+        project_name = self.project.name
+        year = self.project.year
+        shot_name = shot_instance.name
+
+        shot_path = f'{root_constant}/{year}/{project_name}/shots/{shot_name}'
+        self.shot_structure[shot_path] = self.shot_structure.pop("name")
+
+        for key, value in self.shot_structure[shot_path].items():
+            if isinstance(value, dict):
+                for sub_key, sub_value in value.items():
+                    # TODO: fix typing here
+                    self.shot_structure[shot_path][key][sub_key] = f"{shot_path}/{key}/{sub_key}" # type: ignore
+            else:
+                self.shot_structure[shot_path][key] = f"{shot_path}/{key}"
+
+        _generate_directories(self.shot_structure)
+
+        return True
+
+
+def _generate_directories(folder_dictionary) -> bool:
+    """
+    Generates directories for a given folder dictionary.
+    :param dict folder_dictionary: folder dictionary to generate directories for
+    :return: True if successful
+    """
+    for key, value in folder_dictionary.items():
+        if isinstance(value, dict):
+            _generate_directories(value)
+        else:
+            log.info(f"Generating directory {value}")
+            if not os.path.exists(value):
+                os.makedirs(value, exist_ok=True)
+            log.warning(f"Directory {value} already exists, skipping...")
+    return True
+
+

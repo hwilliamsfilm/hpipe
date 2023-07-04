@@ -1,6 +1,6 @@
 from assets import imageSequence, projectFile
 from core import data_manager, project, shot
-from core.hutils import logger
+from core.hutils import logger, system
 from core import constants
 
 log = logger.setup_logger()
@@ -16,9 +16,15 @@ class ProjectDbTest:
         self.db = self.create_project_db()
         self.load_projects_pass = self.load_projects()
         self.save_db_pass = self.save_db()
-        self.get_comps_pass = self.get_comps()
-        self.get_project_files_pass = self.get_project_files()
-        self.log_tests()
+        self.test_create_directories()
+
+        # self.get_comps_pass = self.get_comps()
+        # self.get_project_files_pass = self.get_project_files()
+        # self.convert_sequence_to_video()
+
+        # self.test_image_sequence()
+
+        # self.log_tests()
 
     @staticmethod
     @logger.timeit
@@ -72,7 +78,7 @@ class ProjectDbTest:
             return False
 
     @logger.timeit
-    def get_project_files(self):
+    def get_project_files(self) -> bool:
         """
         Gets all files in the project database
         """
@@ -85,6 +91,26 @@ class ProjectDbTest:
             return True
         else:
             return False
+
+    @logger.timeit
+    def test_image_sequence(self) -> bool:
+        """
+        Test the image sequence class.
+        :returns: bool True if successful
+        """
+
+        test_directory = system.Directory('/Users/hunterwilliams/Documents/hpipegit/tests/test_sequence')
+        image_sequence = imageSequence.sequences_from_directory(test_directory)[0]
+        log.info(image_sequence)
+        image_sequence.to_mp4()
+        return True
+
+    def test_create_directories(self):
+        """
+        Test the create directories function
+        """
+        example_project = self.db.get_project('wound_wood')
+        data_manager.DirectoryGenerator(example_project, push_directories=True)
 
     def log_tests(self):
         """

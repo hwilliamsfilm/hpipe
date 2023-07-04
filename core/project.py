@@ -5,7 +5,6 @@ with the file system and database.
 
 from core.hutils import logger, manager_utils
 from core import shot
-from assets import asset, imageSequence
 import core.constants as constants
 from typing import *
 

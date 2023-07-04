@@ -9,36 +9,36 @@ from core.hutils import system
 LOG_LEVEL = logging.DEBUG
 
 # General constants
-PROJECTS_ROOT = system.Filepath('Y:/projects/').system_path()
+PROJECTS_ROOT = system.Filepath('/Users/hunterwilliams/Documents/projects').system_path()
 ARCHIVE_ROOT = system.Filepath('Y:/projects/_archive/').system_path()
 
 # Directory structure
 PROJECT_STRUCTURE = {
     "name": {
-        "_assets": None,
-        "hda": None,
-        "shots": None,
-        "scripts": None,
-        "deliveries": None
+        "_assets": '',
+        "hda": '',
+        "shots": '',
+        "scripts": '',
+        "deliveries": ''
     }
 }
 
 SHOT_STRUCTURE = {
-    "name":{
+    "name": {
         "output": {
-            "_workarea": None,
-            "cache": None,
-            "render": None,
-            "comp": None,
+            "_workarea": '',
+            "cache": '',
+            "render": '',
+            "comp": '',
         },
         "working_files": {
-            "houdini": None,
-            "nuke": None,
-            "misc": None,
+            "houdini": '',
+            "nuke": '',
+            "misc": '',
         },
-        "plate": None,
-        "ref": None,
-        "trak": None
+        "plate": '',
+        "ref": '',
+        "trak": ''
     }
 }
 
@@ -58,7 +58,7 @@ WORKING_FOLDER = 'working_files'
 HOUDINI_FOLDER = 'houdini'
 
 # PATH CONSTANTS
-DB_PATH = system.Filepath(r'Y:/project_db/projects_refactor.json').system_path()
+DB_PATH = system.Filepath(r'/Users/hunterwilliams/Documents/hpipegit/tests/test_db/test_db.json').system_path()
 DB_BACKUP = system.Filepath(r'Y:/vault/db_backup').system_path()
 
 # Database constants

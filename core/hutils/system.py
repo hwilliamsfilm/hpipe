@@ -4,7 +4,6 @@ This module contains functions for dealing with file paths.
 import os
 import platform
 from enum import Enum
-from assets import asset
 from core.hutils import path
 
 LINUX_ROOT = r'/mnt/share/hlw01/'
@@ -39,6 +38,12 @@ class Directory:
                 directory_files.append(Filepath(os.path.join(root, file)))
 
         return directory_files
+
+    def get_parent_directory(self) -> 'Directory':
+        """
+        Returns a new directory object reprsenting the parent directory of this one if it exists.
+        """
+        return Directory('/'.join(self.directory_path.split('/')[:-1]))
 
 
 class Filepath:
@@ -96,6 +101,13 @@ class Filepath:
             return System.WINDOWS
         if OSX_ROOT in self.filepath_path:
             return System.OSX
+        if "/Users" in self.filepath_path:
+            # FIXME: This assumes that only osx uses /users for local storage
+            #       which is most likely incorrect
+            return System.OSX
+
+        # TODO: add some logic regarding relative paths
+
         raise ValueError('Filepath does not contain a valid system root.')
 
     def get_root(self) -> str:
@@ -138,6 +150,12 @@ class Filepath:
         """
         parent_directory = os.path.dirname(self.filepath_path)
         return Directory(parent_directory)
+
+    def get_filename(self) -> str:
+        """
+        Returns the filename of a file path
+        """
+        return os.path.basename(self.filepath_path).split('.')[0]
 
 
 class SystemConfig:
