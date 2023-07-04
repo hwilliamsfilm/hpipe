@@ -1,8 +1,8 @@
 """
-Module contains data manager class for the Projects database. Also includes the AbstractDataAccessor class to
-be used as a base class for all data accessors. The _get_data_accessor() function is a factory function that
-returns the appropriate data accessor based on the current configuration. In the future, this could be a constructor
-argument for the ProjectDataManager class.
+Module contains data manager class for the Projects database. Also includes the JsonDataAccessor class that directly
+interfaces with the JSON database. The _get_data_accessor() function is a factory function that returns the appropriate
+data accessor based on the current configuration, which could be useful in the case that we have more than one data
+accessor type. In the future, this could be a constructor argument for the ProjectDataManager class.
 """
 
 from core import project, shot, constants
@@ -90,8 +90,8 @@ class ProjectDataManager:
         Saves the current state of our data to the database via the specific implementation of the DataAccessor.
         :return: True if successful
         """
-        for project in self.get_projects():
-            self.update_project(project, push=False)
+        for project_inst in self.get_projects():
+            self.update_project(project_inst, push=False)
 
         return self.accessor.save_data(self.data)
 
@@ -254,7 +254,7 @@ class ProjectDataManager:
         return self.accessor.backup(increment=True)
 
 
-class DirectoryGenerator:
+class ProjectDirectoryGenerator:
     """
     Generates directory structures for projects and shots.
     """
@@ -336,7 +336,7 @@ class DirectoryGenerator:
             if isinstance(value, dict):
                 for sub_key, sub_value in value.items():
                     # TODO: fix typing here
-                    self.shot_structure[shot_path][key][sub_key] = f"{shot_path}/{key}/{sub_key}" # type: ignore
+                    self.shot_structure[shot_path][key][sub_key] = f"{shot_path}/{key}/{sub_key}"  # type: ignore
             else:
                 self.shot_structure[shot_path][key] = f"{shot_path}/{key}"
 

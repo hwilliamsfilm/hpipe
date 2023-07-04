@@ -107,7 +107,6 @@ class Filepath:
             return System.OSX
 
         # TODO: add some logic regarding relative paths
-
         raise ValueError('Filepath does not contain a valid system root.')
 
     def get_root(self) -> str:
@@ -155,6 +154,8 @@ class Filepath:
         """
         Returns the filename of a file path
         """
+        if self.has_frame_number():
+            return '_'.join(os.path.basename(self.filepath_path).split('.')[0].split('_')[:-1])
         return os.path.basename(self.filepath_path).split('.')[0]
 
 

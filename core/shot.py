@@ -4,7 +4,7 @@ with the file system and database. This class is meant to be used with the proje
 for this is that the project class is used to infer certain properties of the shot class such as the base path. Not
 using inheritance because shots can be used outside the project class.
 """
-from assets import asset, imageSequence, projectFile
+from assets import imageSequence, projectFile
 import core.constants as constants
 from core.hutils import logger, system
 
@@ -159,7 +159,7 @@ class Shot:
         Returns the project files contained in the nuke and houdini folders.
         :return: list[str] project files
         """
-        nuke_path =self.get_nuke_path()
+        nuke_path = self.get_nuke_path()
         houdini_path = self.get_houdini_path()
         nuke_files = projectFile.project_files_from_directory(nuke_path)
         houdini_files = projectFile.project_files_from_directory(houdini_path)

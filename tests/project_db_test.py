@@ -18,13 +18,12 @@ class ProjectDbTest:
         self.save_db_pass = self.save_db()
         self.test_create_directories()
 
-        # self.get_comps_pass = self.get_comps()
-        # self.get_project_files_pass = self.get_project_files()
-        # self.convert_sequence_to_video()
+        self.get_comps_pass = self.get_comps()
+        self.get_project_files_pass = self.get_project_files()
 
-        # self.test_image_sequence()
+        self.image_sequence = self.test_image_sequence()
 
-        # self.log_tests()
+        self.log_tests()
 
     @staticmethod
     @logger.timeit
@@ -68,10 +67,15 @@ class ProjectDbTest:
         comps = example_shot.get_comps()
         plates = example_shot.get_plates()
 
-        has_comps = len(comps) > 0
-        is_comp = isinstance(comps[0], imageSequence.GenericImageSequence)
-        has_plates = len(plates) > 0
-        is_plate = isinstance(plates[0], imageSequence.GenericImageSequence)
+        try:
+            has_comps = len(comps) > 0
+            is_comp = isinstance(comps[0], imageSequence.GenericImageSequence)
+            has_plates = len(plates) > 0
+            is_plate = isinstance(plates[0], imageSequence.GenericImageSequence)
+        except IndexError as e:
+            log.error(f"IndexError: {e}")
+            return False
+
         if has_comps and is_comp and has_plates and is_plate:
             return True
         else:
@@ -86,7 +90,11 @@ class ProjectDbTest:
         example_shot = example_project.get_shot('WW_072_0040')
         files = example_shot.get_project_files()
         has_files = len(files) > 0
-        is_file = isinstance(files[0], projectFile.GenericProjectFile)
+        try:
+            is_file = isinstance(files[0], projectFile.GenericProjectFile)
+        except IndexError as e:
+            log.error(f"IndexError: {e}")
+            return False
         if has_files and is_file:
             return True
         else:
@@ -105,12 +113,14 @@ class ProjectDbTest:
         image_sequence.to_mp4()
         return True
 
+    @logger.timeit
     def test_create_directories(self):
         """
         Test the create directories function
         """
-        example_project = self.db.get_project('wound_wood')
-        data_manager.DirectoryGenerator(example_project, push_directories=True)
+        example_projects = self.db.get_projects()
+        for example_project in example_projects:
+            data_manager.ProjectDirectoryGenerator(example_project, push_directories=True)
 
     def log_tests(self):
         """
@@ -120,6 +130,7 @@ class ProjectDbTest:
         log.info(f"------ TESTS: Save db ------------ {self.save_db_pass}")
         log.info(f"------ TESTS: Get comps ---------- {self.get_comps_pass}")
         log.info(f"------ TESTS: Get project files--- {self.get_project_files_pass}")
+        log.info(f"------ TESTS: Image sequence ----- {self.image_sequence}")
 
 
 if __name__ == '__main__':

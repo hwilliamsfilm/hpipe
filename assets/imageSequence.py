@@ -90,7 +90,7 @@ class GenericImageSequence(asset.Asset):
 
     def to_mp4(self, target_directory: 'system.Directory' = system.Directory(r'.//')) -> 'system.Filepath':
         """
-        Converts the image sequence to an mp4 video.
+        Converts the image sequence to a mp4 video.
         """
 
         if target_directory.directory_path == '.' or target_directory.directory_path == './':
@@ -237,7 +237,7 @@ def sequence_to_video(image_sequence: 'GenericImageSequence', output_path: 'syst
         stream = ffmpeg.filter_(stream, 'pad', **pad)
         stream = ffmpeg.filter_(stream, 'format', 'yuv420p')
 
-    stream = ffmpeg.output(stream, output_path.filepath_path, video_bitrate="15M")
+    stream = ffmpeg.output(stream, output_path.filepath_path, loglevel="error", video_bitrate="15M")
 
     try:
         ffmpeg.run(stream)
