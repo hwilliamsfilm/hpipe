@@ -4,7 +4,6 @@ interfaces with the JSON database. The _get_data_accessor() function is a factor
 data accessor based on the current configuration, which could be useful in the case that we have more than one data
 accessor type. In the future, this could be a constructor argument for the ProjectDataManager class.
 """
-
 import json
 import os
 from typing import *
@@ -129,7 +128,6 @@ class ProjectDataManager:
             log.warning(f"Project {project_name} not found in database at path {self.accessor.db_path}")
             return False
 
-        log.warning(f"Updating project {project_name} in database at path {self.accessor.db_path}")
         self.data[project_name] = project_to_update.to_dict()
 
         if push:
@@ -149,7 +147,7 @@ class ProjectDataManager:
             log.warning(f"Project {project_instance.name} already exists in database at path {self.accessor.db_path}")
             return False
 
-        log.warning(f"Adding project {project_instance.name} to database at path {self.accessor.db_path}")
+        log.info(f"Adding project {project_instance.name} to database at path {self.accessor.db_path}")
         self.data[project_instance.name] = project_instance.to_dict()
 
         ProjectDirectoryGenerator(project_instance, push_directories=True)
@@ -334,7 +332,7 @@ class ProjectDirectoryGenerator:
             self.project_structure[project_path][key] = f"{project_path}/{key}"
 
         log.info(f"Generating directories for project {project_name}")
-        log.info(f"Project structure: {self.project_structure}")
+        log.debug(f"Project structure: {self.project_structure}")
 
         _generate_directories(self.project_structure)
 
@@ -390,14 +388,22 @@ def _generate_directories(folder_dictionary) -> bool:
     :param dict folder_dictionary: folder dictionary to generate directories for
     :return: True if successful
     """
+
+    warnings: list[str] = []
+    info: list[str] = []
+
     for key, value in folder_dictionary.items():
         if isinstance(value, dict):
             _generate_directories(value)
         else:
-            log.info(f"Generating directory {value}")
             if not os.path.exists(value):
                 os.makedirs(value, exist_ok=True)
-            log.warning(f"Directory {value} already exists, skipping...")
+                info.append(value)
+            warnings.append(value)
+
+    log.info(f'Generated {len(info)} directories: {info}')
+    log.warning(f'Skipped {len(warnings)} directories: {warnings}')
+
     return True
 
 

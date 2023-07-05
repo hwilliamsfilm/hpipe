@@ -12,7 +12,7 @@ class ProjectDbTest:
     """
     def __init__(self):
         constants.DB_PATH = './tests/test_db.json'
-        self.db = self.create_project_db()
+        self.db = self.create_project_db()[0]
         self.load_projects_pass = self.load_projects()
         self.save_db_pass = self.save_db()
 
@@ -162,6 +162,7 @@ class ProjectDbTest:
         for example_project in example_projects:
             data_manager.ProjectDirectoryGenerator(example_project, push_directories=True)
 
+    @logger.timeit
     def test_archive_project(self):
         """
         Test the archive project function
@@ -170,6 +171,7 @@ class ProjectDbTest:
         self.db.archive_project(example_project)
         return True
 
+    @logger.timeit
     def test_unarchive_project(self):
         example_project = self.db.get_archive_project('wound_wood')
         self.db.unarchive_project(example_project)
@@ -179,15 +181,15 @@ class ProjectDbTest:
         """
         Logs the results of the tests
         """
-        log.info(f"------ TESTS: Load projects: ----- {self.load_projects_pass}")
-        log.info(f"------ TESTS: Save db ------------ {self.save_db_pass}")
-        log.info(f"------ TESTS: Create project ----- {self.create_project}")
-        log.info(f"------ TESTS: Remove project ----- {self.remove_project}")
-        log.info(f"------ TESTS: Get comps ---------- {self.get_comps_pass}")
-        log.info(f"------ TESTS: Get project files--- {self.get_project_files_pass}")
-        log.info(f"------ TESTS: Image sequence ----- {self.image_sequence}")
-        log.info(f"------ TESTS: Archive project ---- {self.test_archive}")
-        log.info(f"------ TESTS: Unarchive project -- {self.test_unarchive}")
+        log.info(f"------ TESTS: Load projects: ----- {self.load_projects_pass[0]} -> {self.load_projects_pass[1]}")
+        log.info(f"------ TESTS: Save db ------------ {self.save_db_pass[0]} -> {self.save_db_pass[1]}")
+        log.info(f"------ TESTS: Create project ----- {self.create_project[0]} -> {self.create_project[1]}")
+        log.info(f"------ TESTS: Remove project ----- {self.remove_project[0]} -> {self.remove_project[1]}")
+        log.info(f"------ TESTS: Get comps ---------- {self.get_comps_pass[0]} -> {self.get_comps_pass[1]}")
+        log.info(f"------ TESTS: Get project files--- {self.get_project_files_pass[0]} -> {self.get_project_files_pass[1]}")
+        log.info(f"------ TESTS: Image sequence ----- {self.image_sequence[0]} -> {self.image_sequence[1]}")
+        log.info(f"------ TESTS: Archive project ---- {self.test_archive[0]} -> {self.test_archive[1]}")
+        log.info(f"------ TESTS: Unarchive project -- {self.test_unarchive[0]} ->  {self.test_unarchive[1]}")
 
 
 if __name__ == '__main__':

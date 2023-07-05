@@ -202,8 +202,6 @@ def sequences_from_directory(directory: system.Directory) -> list[GenericImageSe
         for sequence_key, sequence_value in sequences_dictionary.items():
             directory_sequences.append(sequence_factory(sequence_value, sequence_key))
 
-        log.debug(f"Found {len(directory_sequences)} sequences in {directory.directory_path}")
-
     log.info(f"Found {len(directory_sequences)} sequences in {directory.directory_path}")
 
     return directory_sequences

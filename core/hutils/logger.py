@@ -8,7 +8,7 @@ from functools import wraps
 from colorlog import ColoredFormatter
 
 FORMAT = "%(asctime)s::%(levelname)s-%(funcName)s | %(message)s"
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG
 LOG_FORMAT = "  %(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(asctime)s :::  " \
             "%(message)s%(reset)s :: %(log_color)s%(funcName)s"
 
@@ -40,6 +40,6 @@ def timeit(func):
         end_time = time.perf_counter()
         total_time = end_time - start_time
         log.debug(f'Function {func.__name__}{args} {kwargs} Took {total_time:.4f} seconds')
-        return result
+        return result, total_time
 
     return timeit_wrapper
