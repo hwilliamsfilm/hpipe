@@ -3,13 +3,13 @@ Project class for the project database. This is the main object for the project 
 with the file system and database.
 """
 
-from core.hutils import logger, manager_utils
-from core import shot
-import core.constants as constants
-from typing import *
-
 import datetime
 import os
+from typing import *
+
+import core.constants as constants
+from core import shot
+from core.hutils import logger, manager_utils
 
 log = logger.setup_logger()
 log.debug("project.py loaded")

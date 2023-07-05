@@ -1,8 +1,9 @@
 import os
-from core.hutils import logger, system
-from assets import asset
-
 from typing import *
+
+from assets import asset
+from core.hutils import logger, system
+
 if TYPE_CHECKING:
     pass
 

@@ -3,6 +3,7 @@ Constants for database
 """
 # from core.hutils import system
 import logging
+
 from core.hutils import system
 
 # GENERAL CONSTANTS

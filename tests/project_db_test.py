@@ -1,7 +1,6 @@
 from assets import imageSequence, projectFile
-from core import data_manager, project, shot
+from core import constants, data_manager, project, shot
 from core.hutils import logger, system
-from core import constants
 
 log = logger.setup_logger()
 log.debug("project_db_test.py loaded")

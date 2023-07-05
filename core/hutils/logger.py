@@ -2,10 +2,10 @@
 Some customizations and basic utility functions on top of logging module.
 """
 import logging
-from colorlog import ColoredFormatter
-from functools import wraps
 import time
+from functools import wraps
 
+from colorlog import ColoredFormatter
 
 FORMAT = "%(asctime)s::%(levelname)s-%(funcName)s | %(message)s"
 LOG_LEVEL = logging.INFO

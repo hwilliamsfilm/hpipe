@@ -5,12 +5,12 @@ data accessor based on the current configuration, which could be useful in the c
 accessor type. In the future, this could be a constructor argument for the ProjectDataManager class.
 """
 
-from core import project, shot, constants
-from core.hutils import logger
 import json
 import os
 from typing import *
 
+from core import constants, project, shot
+from core.hutils import logger
 
 log = logger.setup_logger()
 log.debug("data_manager.py loaded")

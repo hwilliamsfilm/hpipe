@@ -4,11 +4,12 @@ with the file system and database. This class is meant to be used with the proje
 for this is that the project class is used to infer certain properties of the shot class such as the base path. Not
 using inheritance because shots can be used outside the project class.
 """
-from assets import imageSequence, projectFile
+from typing import *
+
 import core.constants as constants
+from assets import imageSequence, projectFile
 from core.hutils import logger, system
 
-from typing import *
 if TYPE_CHECKING:
     from core import project
 

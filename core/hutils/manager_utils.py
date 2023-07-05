@@ -2,10 +2,11 @@
 Utility functions for the manager class and other classes that use the manager class.
 """
 
+from typing import *
+
 from core import shot
 from core.hutils import logger
 
-from typing import *
 if TYPE_CHECKING:
     from core import project
 

@@ -4,6 +4,7 @@ This module contains functions for dealing with file paths.
 import os
 import platform
 from enum import Enum
+
 from core.hutils import path
 
 LINUX_ROOT = r'/mnt/share/hlw01/'

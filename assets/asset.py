@@ -1,7 +1,8 @@
-from core.hutils import logger
 from abc import ABC, abstractmethod
-
 from typing import *
+
+from core.hutils import logger
+
 if TYPE_CHECKING:
     pass
 
