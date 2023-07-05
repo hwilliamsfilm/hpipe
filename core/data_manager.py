@@ -59,19 +59,6 @@ class JsonDataAccessor:
         raise NotImplementedError("Backup not implemented yet")
 
 
-def _get_data_accessor() -> JsonDataAccessor:
-    """
-    Factory method for data accessor. Returns the appropriate data accessor based on the config.
-    :return: AbstractDataAccessor subclass
-    """
-    if constants.DB_TYPE == 'json':
-        return JsonDataAccessor()
-    elif constants.DB_TYPE == 'mongodb':
-        raise NotImplementedError("MongoDB not implemented yet")
-    else:
-        raise ValueError(f"Invalid DB_TYPE: {constants.DB_TYPE}")
-
-
 class ProjectDataManager:
     """
     Projects data manager. This is used as the primary interface for the Project's database. Uses the
@@ -79,8 +66,9 @@ class ProjectDataManager:
     """
 
     def __init__(self):
-        self.accessor = _get_data_accessor()
+        self.accessor = JsonDataAccessor()
         self.data = self.accessor.data
+        self.archive_accessor = JsonDataAccessor(constants.ARCHIVE_DB_PATH)
 
     def __repr__(self) -> str:
         return f" Project Manager @ {self.accessor.db_path}"
@@ -163,7 +151,8 @@ class ProjectDataManager:
 
         log.warning(f"Adding project {project_instance.name} to database at path {self.accessor.db_path}")
         self.data[project_instance.name] = project_instance.to_dict()
-        self.build_project_directories(project_instance)
+
+        ProjectDirectoryGenerator(project_instance, push_directories=True)
 
         if push:
             return self.save()
@@ -252,6 +241,56 @@ class ProjectDataManager:
         be backed up to json. If it's json, it will be backed up to json.
         """
         return self.accessor.backup(increment=True)
+
+    def archive_project(self, project_to_archive: project.Project) -> bool:
+        """
+        Archives a project by moving it to the archive database.
+        :param project.Project project_to_archive: project to archive
+        :return: True if successful
+        """
+        log.debug(f"Archiving project {project_to_archive.name}")
+        self.archive_accessor.data[project_to_archive.name] = self.data.pop(project_to_archive.name)
+        self.save()
+        self.archive_accessor.save_data(self.archive_accessor.data)
+        return True
+
+    def unarchive_project(self, project_to_unarchive: project.Project) -> bool:
+        """
+        Unarchives a project by moving it from the archive database to the main database.
+        :param project.Project project_to_unarchive: project to unarchive
+        :return: True if successful
+        """
+        log.debug(f"Unarchiving project {project_to_unarchive.name}")
+        self.data[project_to_unarchive.name] = self.archive_accessor.data.pop(project_to_unarchive.name)
+        self.save()
+        self.archive_accessor.save_data(self.archive_accessor.data)
+        return True
+
+    def get_archive_projects(self):
+        """
+        Builds a list of project.Project objects from the current data.
+        """
+        project_list = []
+        project_count = len(self.archive_accessor.data.items())
+        if project_count == 0:
+            log.warning(f"No projects found in database at path {self.accessor.db_path}")
+            return []
+
+        for key, val in self.archive_accessor.data.items():
+            project_list.append(project.Project.from_dict(val))
+
+        return project_list
+
+    def get_archive_project(self, project_name: str) -> project.Project:
+        """
+        Builds a project.Project object from the current data given a project name.
+        param str project_name: name of project
+        """
+        for project_instance in self.get_archive_projects():
+            if project_instance.name == project_name:
+                return project_instance
+
+        raise ValueError(f"Project {project_name} not found in database at path {self.archive_accessor.db_path}")
 
 
 class ProjectDirectoryGenerator:

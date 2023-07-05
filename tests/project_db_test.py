@@ -16,12 +16,19 @@ class ProjectDbTest:
         self.db = self.create_project_db()
         self.load_projects_pass = self.load_projects()
         self.save_db_pass = self.save_db()
+
+        self.create_project = self.test_create_project()
+        self.remove_project = self.test_remove_project()
+
         self.test_create_directories()
 
         self.get_comps_pass = self.get_comps()
         self.get_project_files_pass = self.get_project_files()
 
         self.image_sequence = self.test_image_sequence()
+
+        self.test_archive = self.test_archive_project()
+        self.test_unarchive = self.test_unarchive_project()
 
         self.log_tests()
 
@@ -55,7 +62,41 @@ class ProjectDbTest:
         Saves the project database
         """
         log.debug("Saving project database")
-        self.db.save()
+        try:
+            self.db.save()
+        except Exception as e:
+            log.error(f"Exception: {e}")
+            return False
+        return True
+
+    @logger.timeit
+    def test_create_project(self):
+        """
+        Creates a new project
+        """
+        log.debug("Creating new project")
+        new_project = project.Project('test_project', description='test_project: this is'
+                                                                  'created as a test during testing')
+        self.db.add_project(new_project, push=True)
+
+        if not self.db.is_project('test_project'):
+            return False
+
+        return True
+
+    @logger.timeit
+    def test_remove_project(self):
+        """
+        Removes a project
+        """
+        log.debug("Removing project")
+        example_project = self.db.get_project('test_project')
+        self.db.remove_project(example_project, push=True)
+
+        if self.db.is_project('test_project'):
+            return False
+
+        return True
 
     @logger.timeit
     def get_comps(self) -> bool:
@@ -122,15 +163,32 @@ class ProjectDbTest:
         for example_project in example_projects:
             data_manager.ProjectDirectoryGenerator(example_project, push_directories=True)
 
+    def test_archive_project(self):
+        """
+        Test the archive project function
+        """
+        example_project = self.db.get_project('wound_wood')
+        self.db.archive_project(example_project)
+        return True
+
+    def test_unarchive_project(self):
+        example_project = self.db.get_archive_project('wound_wood')
+        self.db.unarchive_project(example_project)
+        return True
+
     def log_tests(self):
         """
         Logs the results of the tests
         """
         log.info(f"------ TESTS: Load projects: ----- {self.load_projects_pass}")
         log.info(f"------ TESTS: Save db ------------ {self.save_db_pass}")
+        log.info(f"------ TESTS: Create project ----- {self.create_project}")
+        log.info(f"------ TESTS: Remove project ----- {self.remove_project}")
         log.info(f"------ TESTS: Get comps ---------- {self.get_comps_pass}")
         log.info(f"------ TESTS: Get project files--- {self.get_project_files_pass}")
         log.info(f"------ TESTS: Image sequence ----- {self.image_sequence}")
+        log.info(f"------ TESTS: Archive project ---- {self.test_archive}")
+        log.info(f"------ TESTS: Unarchive project -- {self.test_unarchive}")
 
 
 if __name__ == '__main__':

@@ -59,6 +59,7 @@ HOUDINI_FOLDER = 'houdini'
 
 # PATH CONSTANTS
 DB_PATH = system.Filepath(r'/Users/hunterwilliams/Documents/hpipegit/tests/test_db/test_db.json').system_path()
+ARCHIVE_DB_PATH = system.Filepath(r'/Users/hunterwilliams/Documents/hpipegit/tests/test_db/test_db_archive.json').system_path()
 DB_BACKUP = system.Filepath(r'Y:/vault/db_backup').system_path()
 
 # Database constants
