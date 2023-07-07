@@ -10,8 +10,9 @@ from core.hutils import system
 LOG_LEVEL = logging.DEBUG
 
 # General constants
-PROJECTS_ROOT = system.Filepath('/Users/hunterwilliams/Documents/projects').system_path()
+PROJECTS_ROOT = system.Filepath('/Volumes/hlw01/projects').system_path()
 ARCHIVE_ROOT = system.Filepath('Y:/projects/_archive/').system_path()
+RECYCLE_BIN = system.Filepath('Y:/projects/_recycle_bin/').system_path()
 
 # Directory structure
 PROJECT_STRUCTURE = {
@@ -59,8 +60,8 @@ WORKING_FOLDER = 'working_files'
 HOUDINI_FOLDER = 'houdini'
 
 # PATH CONSTANTS
-DB_PATH = system.Filepath(r'/Users/hunterwilliams/Documents/hpipegit/tests/test_db/test_db.json').system_path()
-ARCHIVE_DB_PATH = system.Filepath(r'/Users/hunterwilliams/Documents/hpipegit/tests/test_db/test_db_archive.json').system_path()
+DB_PATH = system.Filepath(r'/Volumes/hlw01/project_db/projects_refactor.json').system_path()
+ARCHIVE_DB_PATH = system.Filepath(r'/Volumes/hlw01/project_db/projects_refactor_archive.json').system_path()
 DB_BACKUP = system.Filepath(r'Y:/vault/db_backup').system_path()
 
 # Database constants

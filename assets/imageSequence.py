@@ -3,6 +3,7 @@ from typing import *
 
 from assets import asset
 from core.hutils import logger, system
+from core import constants
 
 if TYPE_CHECKING:
     pass
@@ -33,7 +34,7 @@ class GenericImageSequence(asset.Asset):
 
     def __repr__(self) -> str:
         return f"ImageSequence {self.get_start_frame()}-{self.get_end_frame()} @ <{self.asset_name}> " \
-               f"from <{self.get_parent_directory().directory_path}>"
+               f"from <{self.filepaths[0].filepath_path}>"
 
     def get_start_frame(self) -> int:
         """
@@ -89,9 +90,48 @@ class GenericImageSequence(asset.Asset):
         self.filepaths.sort(key=lambda x: x.get_frame_number())
         return True
 
+    def archive(self, target_directory: 'system.Directory' = system.Directory(r'.//')) -> 'GenericImageSequence':
+        """
+        Archives the image sequence to a zip file.
+        """
+
+        import datetime
+        import shutil
+        import uuid
+
+        if target_directory.directory_path == '.' or target_directory.directory_path == './':
+            target_directory = system.Directory(constants.RECYCLE_BIN)
+
+        parent_directory = self.get_parent_directory()
+        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        target_directory = system.Directory(f"{target_directory.directory_path}/"
+                                            f"{current_date}/"
+                                            f"{self.get_basename()}/"
+                                            f"{uuid.uuid4()}")
+
+        if not os.path.exists(target_directory.directory_path):
+            os.makedirs(target_directory.directory_path)
+
+        log.debug(f"Archiving {self} to {target_directory}")
+
+        if not os.path.exists(target_directory.directory_path):
+            raise ValueError(f"Target directory does not exist: {target_directory}")
+
+        if not os.path.exists(parent_directory.directory_path):
+            log.debug(f"image_files: {self.filepaths}")
+            raise ValueError(f"Parent directory does not exist: {parent_directory.directory_path}")
+
+        if not os.path.exists(self.filepaths[0].filepath_path):
+            raise ValueError(f"First image in sequence does not exist: {self.filepaths[0]}")
+
+        shutil.move(parent_directory.directory_path, target_directory.directory_path)
+        new_sequence = sequences_from_directory(target_directory)[0]
+        return new_sequence
+
     def to_mp4(self, target_directory: 'system.Directory' = system.Directory(r'.//')) -> 'system.Filepath':
         """
         Converts the image sequence to a mp4 video.
+        :returns: the target filepath
         """
 
         if target_directory.directory_path == '.' or target_directory.directory_path == './':
@@ -148,7 +188,7 @@ class PngImageSequence(GenericImageSequence):
 
     def __repr__(self) -> str:
         return f"PNG ImageSequence {self.get_start_frame()}-{self.get_end_frame()} @ <{self.asset_name}> " \
-               f"from <{self.get_parent_directory().directory_path}>"
+               f"from <{self.filepaths[0].filepath_path}>"
 
 
 def sequence_factory(file_paths: list['system.Filepath'], file_name: str = '') -> GenericImageSequence:
@@ -199,8 +239,15 @@ def sequences_from_directory(directory: system.Directory) -> list[GenericImageSe
             else:
                 sequences_dictionary[basename].append(system.Filepath(full_path))
 
-        for sequence_key, sequence_value in sequences_dictionary.items():
-            directory_sequences.append(sequence_factory(sequence_value, sequence_key))
+    for sequence_key, sequence_value in sequences_dictionary.items():
+        if sequence_key == '':
+            log.warning(f"Could not find sequence key for {sequence_value}. Skipping..")
+            continue
+
+        if sequence_factory(sequence_value, sequence_key) in directory_sequences:
+            continue
+
+        directory_sequences.append(sequence_factory(sequence_value, sequence_key))
 
     log.info(f"Found {len(directory_sequences)} sequences in {directory.directory_path}")
 

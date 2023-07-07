@@ -46,6 +46,12 @@ class Directory:
         """
         return Directory('/'.join(self.directory_path.split('/')[:-1]))
 
+    def get_basename(self) -> str:
+        """
+        Returns the basename of the directory.
+        """
+        return os.path.basename(self.directory_path)
+
 
 class Filepath:
     """
