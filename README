@@ -1,0 +1,30 @@
+Repository Notes:
+
+This is the basic skeleton to an indie - vfx pipeline. Maintains solid directory structure and database of shots that
+can be referenced by various software.
+
+Future plans:
++ add pyside GUI for browsing outputs
+
++ add pyside GUI for managing DB
+
++ add support for more file management tasks like removing caches, creating deliveries, auto-ingest of assets and plates,
+etc.
+
++ add support for altering project file information from command line and packing jobs into deadline
+
+*CORE*
+> Data manager class entry point to DB
+            e.g. DataManager().get_projects() -> list of projects
+
+> Projects/ Shots generated from data manager
+
+*ASSETS*
+> Filepath / Directory classes take str arguments and do some verifications. Has functions
+that are useful in other areas of the code
+
+> Filepath class also acts as an interface that automatically switches filepaths depending
+on the SystemConfig class which detects the system that is running the script.
+
+> ImageSequence class built for EXR, PNG, JPG but will expand. Has functions aimed at
+usefulness in various software. Also can be used to convert between image formats
