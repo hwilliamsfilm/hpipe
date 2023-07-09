@@ -16,6 +16,7 @@ class System(Enum):
     OSX = 'osx'
     WINDOWS = 'windows'
     LINUX = 'linux'
+    RELATIVE = 'relative'
 
 
 class Directory:
@@ -27,6 +28,7 @@ class Directory:
         self.directory_path = path.fix_path(directory_path)
         if directory_name == '':
             directory_name = os.path.basename(directory_path)
+        self.directory_path = self.system_path()
         self.directory_name = directory_name
 
     def get_files(self) -> list['Filepath']:
@@ -42,7 +44,7 @@ class Directory:
 
     def get_parent_directory(self) -> 'Directory':
         """
-        Returns a new directory object reprsenting the parent directory of this one if it exists.
+        Returns a new directory object representing the parent directory of this one if it exists.
         """
         return Directory('/'.join(self.directory_path.split('/')[:-1]))
 
@@ -51,6 +53,13 @@ class Directory:
         Returns the basename of the directory.
         """
         return os.path.basename(self.directory_path)
+
+    def system_path(self) -> str:
+        """
+        Returns the system path of the directory.
+        """
+        self.directory_path = Filepath(self.directory_path).system_path()
+        return self.directory_path
 
 
 class Filepath:
@@ -113,7 +122,10 @@ class Filepath:
             #       which is most likely incorrect
             return System.OSX
 
-        # TODO: add some logic regarding relative paths
+        # FIXME: This is a hacky way to check if the path is relative
+        if self.filepath_path == '.' or self.filepath_path == r'./':
+            return System.RELATIVE
+
         raise ValueError('Filepath does not contain a valid system root.')
 
     def get_root(self) -> str:
@@ -126,6 +138,8 @@ class Filepath:
             return WINDOWS_ROOT
         if self.system == System.OSX:
             return OSX_ROOT
+        if self.system == System.RELATIVE:
+            return ''
         raise ValueError('Filepath does not contain a valid system root.')
 
     def system_path(self) -> str:
@@ -135,7 +149,7 @@ class Filepath:
         # remove the system root from the path
         sys_config = SystemConfig()
         environment = sys_config.system
-        if environment != self.system:
+        if environment != self.system and self.system != System.RELATIVE:
             return self.filepath_path.replace(self.system_root, sys_config.system_root)
         else:
             return self.filepath_path

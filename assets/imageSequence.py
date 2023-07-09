@@ -128,7 +128,7 @@ class GenericImageSequence(asset.Asset):
         new_sequence = sequences_from_directory(target_directory)[0]
         return new_sequence
 
-    def to_mp4(self, target_directory: 'system.Directory' = system.Directory(r'.//')) -> 'system.Filepath':
+    def to_mp4(self, target_directory: 'system.Directory' = system.Directory(r'.')) -> 'system.Filepath':
         """
         Converts the image sequence to a mp4 video.
         :returns: the target filepath
@@ -137,7 +137,7 @@ class GenericImageSequence(asset.Asset):
         if target_directory.directory_path == '.' or target_directory.directory_path == './':
             target_directory = self.get_parent_directory().get_parent_directory()
 
-        log.info(target_directory.directory_path)
+        log.info(f'Target Directory: {target_directory.directory_path}')
         target_file = system.Filepath(f"{target_directory.directory_path}/{self.get_basename()}.mp4")
 
         if os.path.exists(target_file.filepath_path):

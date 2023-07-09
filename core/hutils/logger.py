@@ -4,11 +4,12 @@ Some customizations and basic utility functions on top of logging module.
 import logging
 import time
 from functools import wraps
+from core import constants
 
 from colorlog import ColoredFormatter
 
 FORMAT = "%(asctime)s::%(levelname)s-%(funcName)s | %(message)s"
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = constants.LOG_LEVEL
 LOG_FORMAT = "  %(log_color)s%(levelname)-8s%(reset)s | %(log_color)s%(asctime)s :::  " \
             "%(message)s%(reset)s :: %(log_color)s%(funcName)s"
 

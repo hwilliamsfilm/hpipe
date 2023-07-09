@@ -84,7 +84,7 @@ class ProjectDbTest:
         return True
 
     @logger.timeit
-    def test_remove_project(self):
+    def test_remove_project(self) -> bool:
         """
         Removes a project
         """
@@ -96,6 +96,7 @@ class ProjectDbTest:
             return False
 
         return True
+
 
     @logger.timeit
     def get_comps(self) -> bool:
@@ -147,8 +148,9 @@ class ProjectDbTest:
         :returns: bool True if successful
         """
 
-        test_directory = system.Directory('/Users/hunterwilliams/Documents/hpipegit/tests/test_sequence')
+        test_directory = system.Directory(r'Y:\projects\2023\wound_wood\shots\WW_072_0040\output\comp')
         image_sequence = imageSequence.sequences_from_directory(test_directory)[0]
+        log.info(test_directory)
         log.info(image_sequence)
         image_sequence.to_mp4()
         return True
