@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="MypyConfigService">
-    <option name="customMypyPath" value="$USER_HOME$/opt/anaconda3/envs/pipe/bin/mypy" />
+    <option name="customMypyPath" value="C:\Users\Hunter\anaconda3\envs\pyside2\Scripts\mypy.exe" />
   </component>
 </project>
