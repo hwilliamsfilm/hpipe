@@ -68,6 +68,7 @@ RENDER_FOLDER = 'render'
 NUKE_FOLDER = 'nuke'
 WORKING_FOLDER = 'working_files'
 HOUDINI_FOLDER = 'houdini'
+PROJECTS_DIR_NAME = 'projects'
 
 
 # Default values for a new project. These are used when creating a new project to populate the project's database

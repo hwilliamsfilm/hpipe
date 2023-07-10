@@ -72,6 +72,13 @@ def project_files_from_directory(project_directory: 'system.Directory') -> list[
     """
     project_files = []
 
+    log.debug(f"Searching for project files in {project_directory}")
+
+    if not isinstance(project_directory, system.Directory):
+        log.error(f"project_directory is not a system.Directory object. "
+                  f"Got {type(project_directory)} instead.")
+        return project_files
+
     for file in project_directory.get_files():
         project_files.append(project_file_from_filepath(file))
 

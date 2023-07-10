@@ -1,9 +1,12 @@
 import os
 from typing import *
 
+import oiio
+
 from assets import asset
 from core.hutils import logger, system
 from core import constants
+from oiio import ImageBuf, ImageSpec, ImageOutput
 
 if TYPE_CHECKING:
     pass
@@ -89,6 +92,14 @@ class GenericImageSequence(asset.Asset):
         """
         self.filepaths.sort(key=lambda x: x.get_frame_number())
         return True
+
+    def get_metadata(self) -> dict:
+        """
+        Returns the metadata of the image sequence.
+        """
+        spec = oiio.ImageInput.open(self.filepaths[0].filepath_path).spec()
+        metadata = spec
+        return metadata
 
     def archive(self, target_directory: 'system.Directory' = system.Directory(r'.//')) -> 'GenericImageSequence':
         """

@@ -162,6 +162,7 @@ class Shot:
         """
         nuke_path = self.get_nuke_path()
         houdini_path = self.get_houdini_path()
+        log.debug(f"Getting project files from {nuke_path} and {houdini_path}")
         nuke_files = projectFile.project_files_from_directory(nuke_path)
         houdini_files = projectFile.project_files_from_directory(houdini_path)
         return nuke_files + houdini_files

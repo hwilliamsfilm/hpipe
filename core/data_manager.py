@@ -177,6 +177,50 @@ class ProjectDataManager:
         log.warning(f"Building shot directories for {shot_instance.name}")
         return False
 
+    def project_from_filepath(self, filepath: str) -> project.Project:
+        """
+        Builds a project.Project object from a filepath.
+        param str filepath: filepath to build project from
+        :return: project.Project object
+        """
+        path_elements = filepath.split(os.sep)
+        project_index = path_elements.index(constants.PROJECTS_DIR_NAME)
+
+        if project_index == -1:
+            raise ValueError(f"Filepath {filepath} does not contain a project folder")
+
+        if project_index + 2 >= len(path_elements):
+            raise ValueError(f"Filepath {filepath} does not contain a project name")
+
+        project_name = path_elements[project_index + 2]
+
+        log.debug(f"Building project from filepath: {filepath}")
+
+        return self.get_project(project_name)
+
+    def shot_from_filepath(self, filepath: str) -> shot.Shot:
+        """
+        Builds a shot.Shot object from a filepath.
+        param str filepath: filepath to build shot from
+        :return: shot.Shot object
+        """
+
+        path_project = self.project_from_filepath(filepath)
+
+        path_elements = filepath.split(os.sep)
+        shot_index = path_elements.index(constants.SHOT_FOLDER)
+
+        if shot_index == -1:
+            raise ValueError(f"Filepath {filepath} does not contain a shot folder")
+
+        if shot_index + 1 >= len(path_elements):
+            raise ValueError(f"Filepath {filepath} does not contain a shot name")
+
+        shot_name = path_elements[shot_index + 1]
+
+        log.debug(f"Building shot from filepath: {filepath}")
+        return path_project.get_shot(shot_name)
+
     def remove_project(self, project_to_remove: project.Project, push: bool = True, archive_project=False) -> bool:
         """
         Removes a project from the database given a project instance. This is the primary method for removing a project.
