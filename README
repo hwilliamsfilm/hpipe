@@ -3,7 +3,7 @@ Repository Notes:
 This is the basic skeleton to an indie - vfx pipeline. Maintains solid directory structure and database of shots that
 can be referenced by various software.
 
-
+[Contribution guidelines for this project](icons/film.png)
 
 Future plans:
 + add pyside GUI for browsing outputs
