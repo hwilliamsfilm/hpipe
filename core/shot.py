@@ -179,7 +179,11 @@ class Shot:
         Returns the assets contained in the shot.
         :return: list[str] assets
         """
-        raise NotImplementedError
+        assets = []
+        assets.extend(self.get_comps())
+        assets.extend(self.get_plates())
+        assets.extend(self.get_project_files())
+        return assets
 
     def add_tag(self, tag) -> bool:
         self.tags.append(tag)

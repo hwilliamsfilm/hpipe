@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from core import project
 
 log = logger.setup_logger()
-log.debug("manager_utils.py loaded")
+log.debug("pipeConfig_utils.py loaded")
 
 
 def shots_from_dict(shot_dictionary: dict, parent_project: 'project.Project') -> list['shot.Shot']:

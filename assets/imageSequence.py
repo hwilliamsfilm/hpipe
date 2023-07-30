@@ -1,12 +1,15 @@
 import os
 from typing import *
 
-import oiio
+try:
+    import oiio
+    from oiio import ImageBuf, ImageSpec, ImageOutput
+except ImportError:
+    pass
 
 from assets import asset
 from core.hutils import logger, system
 from core import constants
-from oiio import ImageBuf, ImageSpec, ImageOutput
 
 if TYPE_CHECKING:
     pass
