@@ -1,32 +1,37 @@
 Repository Notes:
 
-This is the basic skeleton to an indie - vfx pipeline. Maintains solid directory structure and database of shots that
-can be referenced by various software.
+This is my basic skeleton to an indie - vfx pipeline. Creates and maintains a database of projects, shots, assets in a
+json file. Additionally, it has a file management system that can be used to create and manage project assets.
+There are several convenient scripts and software implementations for Houdini and Nuke that can be used to make the
+pipeline more useful.
 
-[Contribution guidelines for this project](icons/film.png)
+Configuration file for the database and related properties is in core.constants.
+
+Apps:
+    > pipeManager -> GUI for managing projects, shots, assets, and file management
+    > pipeConfig -> GUI for configuring the database and related properties
+    > pipeViewer[*in progress*] -> GUI for viewing outputs
+
+Core:
+    > Data manager class entry point to DB
+                e.g. DataManager().get_projects() -> list of projects
+
+    > Project/ Shot objects are generated from data manager but can be manually instantiated.
+                e.g. Project('project_name').get_shots() -> list of shots
+
+Assets:
+    > Filepath / Directory classes take str arguments and do some verifications. Has functions
+    that are useful in other areas of the repo
+                e.g. Filepath(<string filepath>).system_path() -> returns the system path for the operating system that
+                is running the script
+
+    > ImageSequence class built for EXR, PNG, JPG but will be expanded. Has functions aimed at
+    usefulness in various software. Also can be used to convert between image formats
+                e.g. ImageSequence(<string filepath>).get_frame_range() -> returns the frame range of the sequence
+                e.g. ImageSequence(<string filepath>).to_mp4() -> converts the sequence to an mp4
 
 Future plans:
-+ add pyside GUI for browsing outputs
+    + add pyside GUI for browsing outputs
 
-+ add pyside GUI for managing DB
-
-+ add support for more file management tasks like removing caches, creating deliveries, auto-ingest of assets and plates,
-etc.
-
-+ add support for altering project file information from command line and packing jobs into deadline
-
-*CORE*
-> Data manager class entry point to DB
-            e.g. DataManager().get_projects() -> list of projects
-
-> Projects/ Shots generated from data manager
-
-*ASSETS*
-> Filepath / Directory classes take str arguments and do some verifications. Has functions
-that are useful in other areas of the code
-
-> Filepath class also acts as an interface that automatically switches filepaths depending
-on the SystemConfig class which detects the system that is running the script.
-
-> ImageSequence class built for EXR, PNG, JPG but will expand. Has functions aimed at
-usefulness in various software. Also can be used to convert between image formats
+    + add support for more file management tasks like removing caches, creating deliveries, auto-ingest of
+    assets and plates, etc.
