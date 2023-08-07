@@ -1,8 +1,27 @@
+import os.path
 from collections import OrderedDict
+
+import core.constants
 from core import data_manager, project
 import datetime
 from PySide6 import QtWidgets
 from PySide6 import QtGui
+from core.hutils import logger
+from enum import Enum
+
+log = logger.setup_logger()
+log.debug("manager_utils.py loaded")
+
+
+class TargetLocationType(Enum):
+    """
+    Enum class that represents the type of target location. Global means that it could be
+    stored at the global, project, or shot level. Project can only be stored at the project
+    and shot level, etc.
+    """
+    GLOBAL = 0
+    PROJECT = 1
+    SHOT = 2
 
 
 class Constants():
@@ -19,6 +38,125 @@ class Constants():
         "other": {"color": "#ADD8E6", "text_color": "black"},
         "ACTIVE": {"color": "#00FF00", "text_color": "black"},
     }
+    SORTING_TYPES = ['Project Name A-Z', 'Project Name Z-A', 'Date Created Newest', 'Date Created Oldest']
+    INGEST_LOCATIONS = ['Asset', 'Trak', 'Plate', 'Delivery']
+
+
+def ingest_file(filepath: str, target_location: str, selected_project, selected_shot) -> bool:
+    """
+    Ingests a file into the database. This means that it will be copied to the appropriate location
+    :param filepath: The filepath of the file to ingest
+    :param target_location: The location to ingest the file to
+    :param selected_project: The project to ingest the file to
+    :param selected_shot: The shot to ingest the file to
+    :return: True if successful, False if not
+    """
+    from core.hutils import system
+    if os.path.isfile(filepath):
+        dropped_item = system.Filepath(filepath)
+    elif os.path.isdir(filepath):
+        dropped_item = system.Directory(filepath)
+    else:
+        log.warning(f"Dropped item is not a filepath")
+        return False
+    return True
+
+
+def parse_data(manager: data_manager.ProjectDataManager) -> dict:
+    """
+    Parse data from data manager. Returns data but in a reader friendly format.
+    """
+    display_data = {}
+
+    for project_instance in manager.get_projects():
+        project_name = project_instance.name.replace("_", " ").lower()
+        project_display_data = {
+            'Shots:': {},
+            'Description:': project_instance.description,
+            'Date:': project_instance.date
+        }
+        for shot_instance in project_instance.get_shots():
+            shot_display_data = {'Start Frame:': shot_instance.frame_start,
+                                 'End Frame:': shot_instance.frame_end,
+                                 'Tags:': shot_instance.get_tags(),
+                                 'User Data:': shot_instance.user_data}
+            shot_name = shot_instance.name
+            project_display_data['Shots:'][shot_name] = shot_display_data
+        display_data[project_name] = project_display_data
+    return display_data
+
+
+def encode_data(tree_dictionary: dict, database: data_manager.ProjectDataManager) -> dict:
+    """
+    Encodes the tree data into database format. Compares against the current DB data.
+    :param tree_dictionary: dictionary to encode into a dictionary compatible with the database.
+    :param database: data manager to compare against
+    :returns: encoded dictionary
+    """
+
+    dictionary_a = database.data.copy()
+
+    for key, value in tree_dictionary.items():
+        project_name = key.replace(" ", "_").lower()
+        db_project = database.get_project(project_name)
+        # db_project.date = tree_dictionary[key]['Date:']
+        db_project.description = tree_dictionary[key]['Description:']
+        for shot_name in tree_dictionary[key]['Shots:']:
+            db_shot = db_project.get_shot(shot_name)
+            db_shot.user_data = tree_dictionary[key]['Shots:'][db_shot.name]['User Data:']
+            db_shot.tags = tree_dictionary[key]['Shots:'][db_shot.name]['Tags:']
+            db_shot.frame_start = tree_dictionary[key]['Shots:'][db_shot.name]['Start Frame:']
+            db_shot.frame_end = tree_dictionary[key]['Shots:'][db_shot.name]['End Frame:']
+            db_project.update_shot(db_shot)
+        database.update_project(db_project, push=False)
+
+    dictionary_b = database.data.copy()
+    compare_data(dictionary_b, dictionary_a)
+    return database.data
+
+
+def sort_data(data: dict, sorting_type: str) -> dict:
+    """
+    Sort data by project name
+    """
+    if sorting_type == 'Project Name A-Z':
+        sorted_data = OrderedDict(sorted(data.items(), key=lambda x: x[0]))
+    elif sorting_type == 'Project Name Z-A':
+        sorted_data = OrderedDict(sorted(data.items(), key=lambda x: x[0], reverse=True))
+    elif sorting_type == 'Date Created Newest':
+        sorted_data = OrderedDict(sorted(data.items(), key=lambda x: x[1]['Date:'], reverse=True))
+    elif sorting_type == 'Date Created Oldest':
+        sorted_data = OrderedDict(sorted(data.items(), key=lambda x: x[1]['Date:']))
+    else:
+        sorted_data = data
+
+    # remove date from sorted data
+    for key, value in sorted_data.items():
+        value.pop('Date:', None)
+
+    return sorted_data
+
+
+def compare_data(dictionary_a: dict, dictionary_b: dict, path: str = '') -> None:
+    """
+    Compares two dictionaries and prints out the differences to the log. If a key is not in the ground truth dictionary
+    it will be printed out as a warning.
+    :param dictionary_a: New dictionary to compare
+    :param dictionary_b: Ground truth dictionary to compare against
+    :param path: Path to the dictionary
+    :return: dict of differences
+    """
+
+    for k in dictionary_a:
+        if k in dictionary_b:
+            if type(dictionary_a[k]) is dict:
+                compare_data(dictionary_a[k], dictionary_b[k], "[%s/%s]" % (path, k) if path else k)
+                continue
+            if str(dictionary_a[k]) != str(dictionary_b[k]):
+                result = ["%s: " % path, " DB %s : %s -->" % (k, dictionary_b[k]), " TXT %s : %s" % (k, dictionary_a[k])]
+                log.debug(" ".join(result))
+        else:
+            log.info("%s%s as key not in DB\n" % ("%s: " % path if path else "", k))
 
 
 def get_db_data():
@@ -29,89 +167,6 @@ def get_db_data():
     database = data_manager.ProjectDataManager().data
 
     return database
-
-
-def save_db_data(data):
-    """
-    Save data to json file
-    :param data:
-    :return:
-    """
-    raise NotImplementedError
-
-
-def add_project(project_name):
-    """
-    Add a project to the json file
-    :param data:
-    :param project_name:
-    :return:
-    """
-    # get date
-    date = datetime.datetime.now().strftime('%Y-%m-%d')
-
-    # create project object
-    proj = project.Project(project_name, date=date)
-
-    # add project to data
-    data_manager.ProjectDataManager().add_project(proj)
-
-    return True
-
-
-def add_shot(project_name, shot_name):
-    """
-    Add a shot to the json file
-    :param data:
-    :param project_name:
-    :param shot_name:
-    :return:
-    """
-
-    raise NotImplementedError
-
-
-def remove_shot(project_name, shot_name):
-    """
-    Remove a shot from the json file
-    :param data:
-    :param project_name:
-    :param shot_name:
-    :return:
-    """
-    raise NotImplementedError
-
-
-def remove_project(project_name):
-    """
-    Remove a project from the json file
-    :param data:
-    :param project_name:
-    :return:
-    """
-    raise NotImplementedError
-
-
-def add_shot_tags(project_name, shot_name, tags):
-    """
-    Add tags to a shot
-    :param project_name:
-    :param shot_name:
-    :param tags:
-    :return:
-    """
-    raise NotImplementedError
-
-
-def remove_shot_tags(project_name, shot_name):
-    """
-    Remove tags from a shot
-    :param project_name:
-    :param shot_name:
-    :param tags:
-    :return:
-    """
-    raise NotImplementedError
 
 
 def create_tag_button(tag):

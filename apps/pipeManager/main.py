@@ -7,4 +7,4 @@ if __name__ == '__main__':
     application.setStyle('Fusion')
     window = manager_gui.ProjectOverview()
     window.show()
-    sys.exit(application.exec_())
+    sys.exit(application.exec())

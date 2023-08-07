@@ -3,8 +3,53 @@ Pipe Manager GUI for managing projects, shots, and assets.
 """
 
 from PySide6 import QtWidgets, QtCore, QtGui
+
+import core.project
 from core import data_manager
 import pipe_widgets
+import manager_utils
+from core.hutils import logger
+
+log = logger.setup_logger()
+log.debug("manager_gui.py loaded")
+
+
+class ProjectDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setWindowTitle("Create Project")
+
+        prompts = ["Project Name", "Project Description"]
+        self.layout = QtWidgets.QVBoxLayout()
+
+        for prompt in prompts:
+            prompt_layout = QtWidgets.QHBoxLayout()
+            label = QtWidgets.QLabel(prompt, self)
+            q_input = QtWidgets.QLineEdit(self)
+            prompt_layout.addWidget(label)
+            prompt_layout.addWidget(q_input)
+            self.layout.addLayout(prompt_layout)
+
+        self.create_button = QtWidgets.QPushButton("Create", self)
+        self.create_button.clicked.connect(self.accept)
+
+        self.layout.addWidget(self.create_button)
+
+        self.setLayout(self.layout)
+
+    def get_answers(self) -> dict:
+        """
+        Returns a dictionary of the answers from the dialog.
+        """
+        answers = {}
+        for i in range(self.layout.count()):
+            item = self.layout.itemAt(i)
+            if isinstance(item, QtWidgets.QHBoxLayout):
+                dialogue_label = item.itemAt(0).widget().text()
+                dialogue_input = item.itemAt(1).widget().text()
+                answers[dialogue_label] = dialogue_input
+        return answers
 
 
 class ProjectOverview(QtWidgets.QWidget):
@@ -15,20 +60,29 @@ class ProjectOverview(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(ProjectOverview, self).__init__(parent)
 
+        # app fonts and stylesheets
         self.button_font = QtGui.QFont("Helvetica", 15, QtGui.QFont.Bold)
-        self.tree_font = QtGui.QFont("Helvetica", 25)
+        self.dropdown_font = QtGui.QFont("Helvetica", 15, QtGui.QFont.Light)
+        self.tree_font = QtGui.QFont("Helvetica", 23, QtGui.QFont.Bold)
+        self.tree_color = QtGui.QColor(100, 100, 100)
         self.title_font = QtGui.QFont("Helvetica", 40, QtGui.QFont.Bold)
         self.title_font.setItalic(True)
+        self.subtitle_font = QtGui.QFont("Helvetica", 16, QtGui.QFont.Light)
+        self.subtitle_font.setItalic(True)
         self.watermark_font = QtGui.QFont("Helvetica", 20, QtGui.QFont.Light)
+        self.date_font = QtGui.QFont("Helvetica", 20, QtGui.QFont.Bold, italic=True)
+        self.filepath_font = QtGui.QFont("Helvetica", 15, QtGui.QFont.Bold, italic=True)
         self.shot_color = QtGui.QColor(60, 110, 200)
         self.project_color = QtGui.QColor(200, 110, 60)
+        self.date_color = QtGui.QColor(100, 100, 100)
+        self.primary_tree = QtGui.QColor(180, 180, 180)
+        self.secondary_tree = QtGui.QColor(100, 100, 100)
         self.button_stylesheet = "background-color: rgb(80, 90, 100); color: rgb(200, 200, 200)"
         self.window_stylesheet = "background-color: rgb(60, 60, 60); color: rgb(200, 200, 200);"
         self.row_height = 200
         self.alternating_color_stylesheet = "background-color: rgb(65, 65, 65); " \
                                             "alternate-background-color: rgb(55, 55, 55);"
         self.tree_stylesheet = "QTreeView::item { padding: 20px };"
-        # set icon for window
 
         # create a spacer element
         self.spacer = QtWidgets.QLineEdit()
@@ -39,6 +93,32 @@ class ProjectOverview(QtWidgets.QWidget):
         self.spacer.setFocusPolicy(QtCore.Qt.NoFocus)
         self.spacer_layout = QtWidgets.QVBoxLayout()
         self.spacer_layout.addWidget(self.spacer)
+
+        # add "sort by" dropdown
+        self.sort_by_layout = QtWidgets.QHBoxLayout()
+        self.sort_by_layout.setAlignment(QtCore.Qt.AlignRight)
+        self.sort_by_label = QtWidgets.QLabel('Sort By:')
+        self.sort_by_label.setFont(self.dropdown_font)
+        self.sort_by_label.setStyleSheet(self.window_stylesheet)
+        self.sort_by_layout.addWidget(self.sort_by_label)
+        self.sort_by_dropdown = QtWidgets.QComboBox()
+        self.sort_by_dropdown.setStyleSheet("QComboBox { combobox-popup: 0; }")
+        self.sort_by_dropdown.addItems(manager_utils.Constants().SORTING_TYPES)
+        self.sort_by_dropdown.setFont(self.dropdown_font)
+        self.sort_by_layout.addWidget(self.sort_by_dropdown)
+
+        # Add "Refresh" button
+        self.refresh_button = QtWidgets.QPushButton()
+        self.refresh_pixmap = QtGui.QPixmap('../../icons/cupcake.png')
+        self.refresh_button.setFixedHeight(40)
+        self.refresh_button.setFixedWidth(40)
+        self.refresh_button.setFlat(True)
+        self.refresh_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.refresh_button.setToolTip('Refresh')
+        self.refresh_button.setIconSize(QtCore.QSize(40, 40))
+        self.refresh_button.setIcon(QtGui.QIcon(self.refresh_pixmap))
+        self.sort_by_layout.addWidget(self.refresh_button)
+        self.refresh_button.setStyleSheet(self.button_stylesheet)
 
         # Create main title
         self.title_layout = QtWidgets.QHBoxLayout()
@@ -57,8 +137,12 @@ class ProjectOverview(QtWidgets.QWidget):
         self.tree_button_layout = QtWidgets.QHBoxLayout()
         self.setWindowIcon(QtGui.QIcon(self.icon_pixmap))
 
+        self.subtitle = QtWidgets.QLabel()
+        self.subtitle.setText("'Chaos is just order waiting to be discovered.'")
+        self.subtitle.setFont(self.subtitle_font)
+
         self.main_layout.addLayout(self.title_layout)
-        self.main_layout.addLayout(self.spacer_layout)
+        self.main_layout.addWidget(self.subtitle)
         self.main_layout.addLayout(self.tree_button_layout)
 
         self.setLayout(self.main_layout)
@@ -75,6 +159,7 @@ class ProjectOverview(QtWidgets.QWidget):
         self.tree.setFont(self.tree_font)
         self.tree.header().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
         self.tree.header().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        self.tree.header().setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
         self.tree.header().setMinimumSectionSize(self.row_height)
         self.tree.setAlternatingRowColors(True)
         self.tree.header().setDefaultSectionSize(100)
@@ -83,8 +168,12 @@ class ProjectOverview(QtWidgets.QWidget):
         self.tree.setUniformRowHeights(True)
         self.tree.setItemDelegate(pipe_widgets.EditableDelegate())
         self.tree.setItemDelegate(pipe_widgets.EditableDelegate())
+        self.tree_header_layout = QtWidgets.QVBoxLayout()
 
-        self.tree_button_layout.addWidget(self.tree)
+        self.tree_header_layout.addLayout(self.sort_by_layout)
+        self.tree_header_layout.addWidget(self.tree)
+
+        self.tree_button_layout.addLayout(self.tree_header_layout)
 
         # Create button layout
         self.button_layout = QtWidgets.QVBoxLayout()
@@ -110,6 +199,15 @@ class ProjectOverview(QtWidgets.QWidget):
         self.button_layout.addWidget(self.add_project_button)
         self.add_project_button.setStyleSheet(self.button_stylesheet)
 
+        # Add "remove project" button
+        self.remove_project_button = QtWidgets.QPushButton('Remove Project')
+        self.remove_project_button.clicked.connect(self.remove_project)
+        self.remove_project_button.setFont(self.button_font)
+        self.remove_project_button.setFixedHeight(40)
+        self.remove_project_button.setFixedWidth(200)
+        self.button_layout.addWidget(self.remove_project_button)
+        self.remove_project_button.setStyleSheet(self.button_stylesheet)
+
         # Add "shot tags" button
         self.add_shot_tags_button = QtWidgets.QPushButton('Add Shot Tags')
         self.add_shot_tags_button.clicked.connect(self.add_shot_tags)
@@ -130,15 +228,14 @@ class ProjectOverview(QtWidgets.QWidget):
 
         # Add "save" button
         self.save_button = QtWidgets.QPushButton('Save')
-        self.save_button.clicked.connect(self.save)
         self.save_button.setFixedHeight(40)
         self.save_button.setFixedWidth(200)
         self.save_button.setFont(self.button_font)
         self.button_layout.addWidget(self.save_button)
         self.save_button.setStyleSheet(self.button_stylesheet)
 
-        # add tre view below main layout
-        # TODO: Add drag and drop functionality
+        # Add "Drag and Drop" button
+        self.drag_drop_layout = QtWidgets.QHBoxLayout()
         self.drag_drop_button = QtWidgets.QPushButton("Drag and drop here to ingest files.")
         self.drag_drop_button.setStyleSheet('color: rgb(200, 200, 200)')
         self.drag_drop_button.setFlat(True)
@@ -146,7 +243,21 @@ class ProjectOverview(QtWidgets.QWidget):
         self.drag_drop_button.setFixedHeight(100)
         self.drag_drop_button.setFont(QtGui.QFont("Helvetica", 15, QtGui.QFont.Light))
         self.drag_drop_button.setAcceptDrops(True)
-        self.main_layout.addWidget(self.drag_drop_button)
+        self.drag_drop_button.dragEnterEvent = self.dragEnterEvent
+        self.drag_drop_button.dropEvent = self.dropEvent
+        self.drag_drop_layout.addWidget(self.drag_drop_button)
+        self.drag_drop_combo_layout = QtWidgets.QVBoxLayout()
+        self.drag_drop_combo = QtWidgets.QComboBox()
+        self.drag_drop_combo.addItems(manager_utils.Constants().INGEST_LOCATIONS)
+        self.drag_drop_combo.setFixedHeight(40)
+        self.drag_drop_combo.setFixedWidth(200)
+        self.loading_bar = QtWidgets.QProgressBar()
+        self.loading_bar.setFixedHeight(40)
+        self.loading_bar.setFixedWidth(200)
+        self.drag_drop_combo_layout.addWidget(self.drag_drop_combo)
+        self.drag_drop_combo_layout.addWidget(self.loading_bar)
+        self.drag_drop_layout.addLayout(self.drag_drop_combo_layout)
+        self.main_layout.addLayout(self.drag_drop_layout)
 
         self.setLayout(self.main_layout)
 
@@ -156,10 +267,16 @@ class ProjectOverview(QtWidgets.QWidget):
         self.watermark_label.setAlignment(QtCore.Qt.AlignBottom | QtCore.Qt.AlignRight)
         self.main_layout.addWidget(self.watermark_label)
 
+        # Connect signals
+        self.sort_by_dropdown.currentTextChanged.connect(self.refresh_tree)
+        self.refresh_button.clicked.connect(lambda: self.refresh_tree(refresh_data=True))
+        self.save_button.clicked.connect(self.save)
+
         # Refresh
+        self.sorted_data = {}
         self.refresh_tree()
 
-    def refresh_tree(self) -> None:
+    def refresh_tree(self, refresh_data=False) -> None:
         """
         Refresh the tree widget. This is called when the window is first opened and when the user clicks the
         "refresh" button.
@@ -167,7 +284,12 @@ class ProjectOverview(QtWidgets.QWidget):
         """
         expansion_state = self.get_expansion_state()
         self.tree.clear()
-        self.populate_tree(self.database.data, self.tree.invisibleRootItem())
+        if refresh_data:
+            self.database = data_manager.ProjectDataManager()
+        tree_data = manager_utils.parse_data(self.database)
+        sort_type = self.sort_by_dropdown.currentText()
+        self.sorted_data = manager_utils.sort_data(tree_data, sort_type)
+        self.populate_tree(self.sorted_data, self.tree.invisibleRootItem())
         self.format_tree()
         self.restore_expansion_state(expansion_state)
 
@@ -196,25 +318,37 @@ class ProjectOverview(QtWidgets.QWidget):
         "refresh" button.
         """
 
-        # make project titles red
         for i in range(self.tree.topLevelItemCount()):
-            self.tree.topLevelItem(i).setForeground(0, self.project_color)
-            self.tree.topLevelItem(i).setForeground(1, self.project_color)
+            project_title = self.tree.topLevelItem(i)
+            project_title.setForeground(0, self.project_color)
+            project_title.setForeground(1, self.project_color)
 
-        # make all shots blue
         for i in range(self.tree.topLevelItemCount()):
             for j in range(self.tree.topLevelItem(i).childCount()):
+                project_properties = self.tree.topLevelItem(i).child(j)
+                project_properties.setForeground(0, self.primary_tree)
+                project_properties.setForeground(1, self.secondary_tree)
                 for k in range(self.tree.topLevelItem(i).child(j).childCount()):
-                    self.tree.topLevelItem(i).child(j).child(k).setForeground(0, self.shot_color)
-                    self.tree.topLevelItem(i).child(j).child(k).setForeground(1, self.shot_color)
+                    shot_title = self.tree.topLevelItem(i).child(j).child(k)
+                    shot_title.setForeground(0, self.shot_color)
+                    shot_title.setForeground(1, self.shot_color)
+                    for l in range(self.tree.topLevelItem(i).child(j).child(k).childCount()):
+                        shot_properties = self.tree.topLevelItem(i).child(j).child(k).child(l)
+                        shot_properties.setForeground(0, self.primary_tree)
+                        shot_properties.setForeground(1, self.secondary_tree)
 
-                    # TODO: move this to a separate function. It adds shot tags to the tree widget.
-                    # project_name = self.tree.topLevelItem(i).text(0)
-                    # shot = self.tree.topLevelItem(i).child(j).child(k).text(0)
-                    # shot_tags = self.database.get_project(project_name).get_shot(shot).get_tags()
-                    # if shot_tags is not None and shot_tags is not ['']:
-                    #     button = pipe_widgets.MultipleTagWidget(shot_tags)
-                    #     self.tree.setItemWidget(self.tree.topLevelItem(i).child(j).child(k), 3, button)
+        # add date to the second column next to the project name
+        for i in range(self.tree.topLevelItemCount()):
+            project_title = self.tree.topLevelItem(i)
+            project_name = self.tree.topLevelItem(i).text(0).replace(" ", "_").lower()
+            project_date = self.database.get_project(project_name).date
+            project_path = self.database.get_project(project_name).get_project_path()
+            project_title.setText(1, str(project_date))
+            project_title.setText(2, str(project_path))
+            project_title.setForeground(1, self.date_color)
+            project_title.setFont(1,self.date_font)
+            project_title.setForeground(2, self.date_color)
+            project_title.setFont(2, self.filepath_font)
 
     def add_shot(self) -> bool:
         """
@@ -228,20 +362,136 @@ class ProjectOverview(QtWidgets.QWidget):
         Add a project to the database and tree widget.
         :return: True if successful.
         """
+        dialog = ProjectDialog(self)
+        answers = {}
+        if dialog.exec_():
+            answers = dialog.get_answers()
+
+        log.debug(answers)
+
+        project_name = answers.get('Project Name')
+        project_description = answers.get("Project Description")
+
+        if project_name and project_description:
+            data_manager.ProjectDataManager().add_project(
+                core.project.Project(project_name, description=project_description))
+
+        self.refresh_tree(refresh_data=True)
+
+        return True
+
+    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> bool:
+        """
+        Drag enter event.
+        :param event: The event.
+        """
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
+        return True
+
+    def dropEvent(self, event: QtGui.QDropEvent) -> bool:
+        """
+        Drop event.
+        :param event: The event.
+        """
+        filepath = None
+        if event.mimeData().hasUrls():
+            for url in event.mimeData().urls():
+                filepath = url.toLocalFile()
+        else:
+            event.ignore()
+
+        if not self.tree.selectedItems():
+            selected_project = None
+            selected_shot = None
+            has_shot = False
+        else:
+            selected_project = self.get_top_parent(self.tree.selectedItems()[0])
+            selected_shot = self.tree.selectedItems()[0]
+            has_shot = selected_shot.parent().parent() == selected_project if selected_shot.parent() else False
+
+        target_location = self.drag_drop_combo.currentText()
+
+        if selected_project and has_shot:
+            log.info(f"Drag and drop detected :: selected Shot: {selected_shot.text(0)}")
+            selected_shot = selected_shot.replace(' ', '_').lower()
+        elif selected_project:
+            selected_project = selected_project.replace(' ', '_').lower()
+            log.info(f"Drag and drop detected :: selected Project: {selected_project.text(0)}")
+        else:
+            log.info(f'Drag and drop detected :: file: {filepath}')
+
+        log.info(f"Target Location: {target_location}")
+
+        manager_utils.ingest_file(filepath, target_location, selected_project, selected_shot)
+        return True
 
     def remove_project(self) -> bool:
         """
         Remove a project from the database and tree widget.
         :return: True if successful.
         """
-        raise NotImplementedError
+        database = data_manager.ProjectDataManager()
+        if not self.tree.selectedItems():
+            return False
+        selected_project = self.get_top_parent(self.tree.selectedItems()[0])
+        try:
+            project_name = selected_project.text(0).replace(" ", "_").lower()
+            database.remove_project(database.get_project(project_name))
+        except Exception as e:
+            log.error(e)
+            return False
+        self.refresh_tree(refresh_data=True)
+        return True
 
-    def tree_contents(self):
+    def get_top_parent(self, item):
         """
-        Get the contents of the tree
-        :return:
+        Get the top parent of an item.
+        :param item: The item to get the top parent of.
+        :return: The top parent of the item.
         """
-        raise NotImplementedError
+        parent = item.parent()
+        if parent:
+            return self.get_top_parent(parent)
+        else:
+            return item
+
+    def get_tree_contents(self, tree, parent=None, result=None):
+        # TODO: rethink the logic on this method
+        """
+        Recursively converts the data from a QTreeWidget into a dictionary.
+        :param tree: QTreeWidget to extract data from
+        :param parent: Parent QTreeWidgetItem (used in recursion)
+        :param result: Dictionary to store the extracted data (used in recursion)
+        :return: Dictionary containing the QTreeWidget data
+        """
+        if result is None:
+            result = {}
+        if parent is None:
+            children = [tree.topLevelItem(i) for i in range(tree.topLevelItemCount())]
+        else:
+            children = [parent.child(i) for i in range(parent.childCount())]
+
+        for child in children:
+            item_key = child.text(0)
+            item_value = child.text(1)
+
+            if parent is not None:
+                item_key = f"{item_key}"
+
+            # FIXME: need to also check if its the top level item to ignore stuff like the date and filepath
+            is_top_level = False
+            if parent is None:
+                is_top_level = True
+
+            if item_value and not is_top_level:
+                result[item_key] = item_value
+            else:
+                result[item_key] = {}
+                self.get_tree_contents(tree, child, result[item_key])
+        return result
 
     def get_children(self, item):
         """
@@ -252,11 +502,16 @@ class ProjectOverview(QtWidgets.QWidget):
         raise NotImplementedError
 
     def save(self):
+        # TODO: This is pretty un-elegant, should probably have some QC before saving or pop up, "are you sure" etc
         """
         Save the data to the database
         :return:
         """
-        raise NotImplementedError
+        user_data = self.get_tree_contents(self.tree)
+        database = data_manager.ProjectDataManager()
+        updated_db_data = manager_utils.encode_data(user_data, database)
+        database.data = updated_db_data
+        database.save()
 
     def add_shot_tags(self):
         """
@@ -286,6 +541,9 @@ class ProjectOverview(QtWidgets.QWidget):
                     for j in range(self.tree.topLevelItem(i).child(k).childCount()):
                         if self.tree.topLevelItem(i).child(k).isExpanded():
                             expanded_shots.append(self.tree.topLevelItem(i).child(k).text(0))
+                        for l in range(self.tree.topLevelItem(i).child(k).child(j).childCount()):
+                            if self.tree.topLevelItem(i).child(k).child(j).isExpanded():
+                                expanded_shots.append(self.tree.topLevelItem(i).child(k).child(j).text(0))
 
         return expanded_projects, expanded_shots
 
@@ -301,5 +559,8 @@ class ProjectOverview(QtWidgets.QWidget):
                 for j in range(self.tree.topLevelItem(i).childCount()):
                     if self.tree.topLevelItem(i).child(j).text(0) in expansion_state[1]:
                         self.tree.topLevelItem(i).child(j).setExpanded(True)
+                    for k in range(self.tree.topLevelItem(i).child(j).childCount()):
+                        if self.tree.topLevelItem(i).child(j).child(k).text(0) in expansion_state[1]:
+                            self.tree.topLevelItem(i).child(j).child(k).setExpanded(True)
 
         return True

@@ -149,6 +149,47 @@ class Project:
         self.shots.append(new_shot)
         return new_shot
 
+    def remove_shot(self, shot_name: str) -> bool:
+        """
+        Removes shot from shot list.
+        :param shot_name: shot name to be removed.
+        :returns: True if successful.
+        """
+        if not self.get_shot(shot_name):
+            log.warning('Shot to remove does not exist.')
+            return False
+
+        shot_amount = len(self.shots)
+
+        new_shot_list = []
+        for shot_instance in self.shots:
+            if shot_instance.name == shot_name:
+                continue
+            new_shot_list.append(shot_instance)
+        self.shots = new_shot_list
+
+        if len(self.shots) != shot_amount-1:
+            raise Exception
+
+        return True
+
+    def update_shot(self, shot_to_update: shot.Shot) -> bool:
+        """
+        Updates a project in the database given a project instance. This is the primary method for updating a project.
+        :param project.Project shot_to_update: project instance to be updated in the database
+        :returns: True if successful.
+        """
+        shot_name = shot_to_update.name
+
+        if shot_name not in [s.name for s in self.get_shots()]:
+            log.warning(f"Project {shot_name} not found in database in project {self.name}")
+            return False
+
+        self.remove_shot(shot_name)
+        self.shots.append(shot_to_update)
+
+        return True
+
     def export_shots(self) -> dict:
         """
         Export the shots in the project to a dictionary for storage in the database.

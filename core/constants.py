@@ -11,7 +11,7 @@ LOG_LEVEL = logging.DEBUG
 # GENERAL
 
 # Path to the projects' root. This is where all outputs / project files / renders will be stored
-PROJECTS_ROOT = system.Filepath('/Volumes/hlw01/projects').system_path()
+PROJECTS_ROOT = system.Filepath('/Users/hunterwilliams/Documents/projects').system_path()
 
 # Path to the projects' archive root. This is where all outputs / project files / renders will be stored
 # once "archived"
@@ -80,11 +80,13 @@ SLATE_PATH = r'Y:\_global_assets\slate\slate_A01.png'
 
 # Database filepath - this is where the database is stored. This is used by the Database class to load and save the
 # database.
-DB_PATH = system.Filepath(r'/Volumes/hlw01/project_db/projects_refactor.json').system_path()
+# DB_PATH = system.Filepath(r'/Volumes/hlw01/project_db/projects_refactor.json').system_path()
+DB_PATH = system.Filepath(r'/Users/hunterwilliams/Documents/projects_refactor.json').system_path()
 
 # Database filepath - this is where the database Archive is stored. This is used by the Database class
 # to load and save the archive database. Could just be the same as the DB_PATH, with a different filename.
-ARCHIVE_DB_PATH = system.Filepath(r'/Volumes/hlw01/project_db/projects_refactor_archive.json').system_path()
+# ARCHIVE_DB_PATH = system.Filepath(r'/Volumes/hlw01/project_db/projects_refactor_archive.json').system_path()
+ARCHIVE_DB_PATH = system.Filepath(r'/Users/hunterwilliams/Documents/projects_refactor_archive.json').system_path()
 
 # A folder to store backups of the database. This is used by the Database class to create backups of the database when
 # it is saved or any modifications are made to it.
@@ -93,4 +95,7 @@ DB_BACKUP = system.Filepath(r'Y:/vault/db_backup').system_path()
 # Database type. This is unnecessary but may be used in the future to change the database type. Currently only json is
 # supported.
 DB_TYPE = 'json'
+
+# Global assets folder. This is used by the PipeManager GUI to Ingest relevant files.
+GLOBAL_ASSETS = system.Filepath(r'Y:/_global_assets').system_path()
 
