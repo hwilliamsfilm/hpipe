@@ -4,6 +4,7 @@ This module contains functions for dealing with file paths.
 import os
 import platform
 from enum import Enum
+from typing import *
 
 from core.hutils import path
 
@@ -63,6 +64,12 @@ class Directory:
         """
         self.directory_path = Filepath(self.directory_path).system_path()
         return self.directory_path
+
+    def exists(self) -> bool:
+        """
+        Returns True if the directory exists, False if not.
+        """
+        return os.path.exists(self.directory_path)
 
 
 class Filepath:
@@ -181,6 +188,25 @@ class Filepath:
         if self.has_frame_number():
             return '_'.join(os.path.basename(self.filepath_path).split('.')[0].split('_')[:-1])
         return os.path.basename(self.filepath_path).split('.')[0]
+
+    def exists(self) -> bool:
+        """
+        Returns True if the filepath exists, False if not
+        """
+        return os.path.exists(self.filepath_path)
+
+
+def path_factory(filepath: str) -> Union[Filepath, Directory]:
+    """
+    Factory function for creating a path object. This function will return a Directory object if the filepath
+    is a directory and a Filepath object if the filepath is a file.
+    :param filepath: filepath to create an object from
+    :return: Filepath or Directory object
+    """
+    if os.path.isdir(filepath):
+        return Directory(filepath)
+    else:
+        return Filepath(filepath)
 
 
 class SystemConfig:

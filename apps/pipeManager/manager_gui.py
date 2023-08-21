@@ -396,37 +396,40 @@ class ProjectOverview(QtWidgets.QWidget):
         Drop event.
         :param event: The event.
         """
-        filepath = None
+        filepath = ''
+        target_location = self.drag_drop_combo.currentText()
+
         if event.mimeData().hasUrls():
             for url in event.mimeData().urls():
                 filepath = url.toLocalFile()
         else:
             event.ignore()
 
-        if not self.tree.selectedItems():
-            selected_project = None
-            selected_shot = None
-            has_shot = False
-        else:
+        if filepath == '':
+            return False
+
+        try:
             selected_project = self.get_top_parent(self.tree.selectedItems()[0])
-            selected_shot = self.tree.selectedItems()[0]
-            has_shot = selected_shot.parent().parent() == selected_project if selected_shot.parent() else False
+        except IndexError:
+            selected_project = None
 
-        target_location = self.drag_drop_combo.currentText()
+        project_name = selected_project.text(0).replace(" ", "_").lower()
+        selected_shot = self.tree.selectedItems()[0]
+        shot_name = selected_shot.text(0).replace(" ", "_")
+        project_list = [proj.name for proj in self.database.get_projects()]
 
-        if selected_project and has_shot:
-            log.info(f"Drag and drop detected :: selected Shot: {selected_shot.text(0)}")
-            selected_shot = selected_shot.replace(' ', '_').lower()
-        elif selected_project:
-            selected_project = selected_project.replace(' ', '_').lower()
-            log.info(f"Drag and drop detected :: selected Project: {selected_project.text(0)}")
+        if project_name in project_list:
+            project_object = self.database.get_project(project_name)
+            shot_list = [shot.name for shot in project_object.get_shots()]
+            if shot_name in shot_list:
+                shot_object = project_object.get_shot(shot_name)
+                manager_utils.ingest_file(filepath, target_location, project_object, shot_object)
+                return True
+            # its a valid project and should at least be added here
+            return True
         else:
-            log.info(f'Drag and drop detected :: file: {filepath}')
-
-        log.info(f"Target Location: {target_location}")
-
-        manager_utils.ingest_file(filepath, target_location, selected_project, selected_shot)
-        return True
+            # its not a valid project or shot, so lets add it globally
+            return True
 
     def remove_project(self) -> bool:
         """

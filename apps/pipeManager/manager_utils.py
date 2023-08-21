@@ -2,12 +2,13 @@ import os.path
 from collections import OrderedDict
 
 import core.constants
-from core import data_manager, project
+from core import data_manager, project, shot
 import datetime
 from PySide6 import QtWidgets
 from PySide6 import QtGui
 from core.hutils import logger
 from enum import Enum
+from typing import *
 
 log = logger.setup_logger()
 log.debug("manager_utils.py loaded")
@@ -24,7 +25,7 @@ class TargetLocationType(Enum):
     SHOT = 2
 
 
-class Constants():
+class Constants:
     """
     Constants for the project overview
     """
@@ -42,23 +43,38 @@ class Constants():
     INGEST_LOCATIONS = ['Asset', 'Trak', 'Plate', 'Delivery']
 
 
-def ingest_file(filepath: str, target_location: str, selected_project, selected_shot) -> bool:
+def ingest_file(filepath: str, target_location: str, project_object: Union[project.Project, None],
+                shot_object: Union[shot.Shot, None]) -> bool:
     """
     Ingests a file into the database. This means that it will be copied to the appropriate location
-    :param filepath: The filepath of the file to ingest
-    :param target_location: The location to ingest the file to
-    :param selected_project: The project to ingest the file to
-    :param selected_shot: The shot to ingest the file to
+    and a database entry will be created for it.
+    :param filepath: filepath of the file to ingest
+    :param target_location: target location to ingest the file to
+    :param project_object: project object to ingest the file to
+    :param shot_object: shot object to ingest the file to
     :return: True if successful, False if not
     """
     from core.hutils import system
-    if os.path.isfile(filepath):
-        dropped_item = system.Filepath(filepath)
-    elif os.path.isdir(filepath):
-        dropped_item = system.Directory(filepath)
-    else:
-        log.warning(f"Dropped item is not a filepath")
+    from core import constants
+    dropped_item = system.path_factory(filepath)
+
+    if not dropped_item.exists():
+        log.warning(f'File or directory {filepath} does not exist. Cannot ingest.')
         return False
+
+    # TODO: make location path a directory object
+    location_path = constants.GLOBAL_ASSETS
+    
+    if target_location == 'Asset':
+        location_path = constants.GLOBAL_ASSETS
+        if project_object:
+            location_path = project_object.get_assets_path()
+    if target_location == 'Plate':
+        location_path = constants.GLOBAL_PLATES # TODO: add to constants
+        if project_object:
+            if shot_object:
+                location_path = shot_object.get_plate_path()
+
     return True
 
 
