@@ -1,11 +1,12 @@
-import os.path
+
 from collections import OrderedDict
 
-import core.constants
 from core import data_manager, project, shot
-import datetime
-from PySide6 import QtWidgets
-from PySide6 import QtGui
+import sys
+if sys.version_info <= (3, 8):
+    from PySide2 import QtWidgets, QtGui
+else:
+    from PySide6 import QtWidgets, QtGui
 from core.hutils import logger
 from enum import Enum
 from typing import *

@@ -14,7 +14,7 @@ log = logger.setup_logger()
 log.debug("pipeConfig_utils.py loaded")
 
 
-def shots_from_dict(shot_dictionary: dict, parent_project: 'project.Project') -> list['shot.Shot']:
+def shots_from_dict(shot_dictionary: dict, parent_project: 'project.Project') -> List['shot.Shot']:
     """
     Creates a list of shot objects from a dictionary. Extracting this from the project class to
     create shot objects with references to the project class.

@@ -2,13 +2,19 @@
 Pipe Manager GUI for managing projects, shots, and assets.
 """
 
-from PySide6 import QtWidgets, QtCore, QtGui
+import sys
+if sys.version_info <= (3, 8):
+    from PySide2 import QtWidgets, QtCore, QtGui
+    from typing_extensions import TypedDict, Literal, overload
+else:
+    from PySide6 import QtWidgets, QtCore, QtGui
 
 import core.project
 from core import data_manager
-import pipe_widgets
-import manager_utils
+from apps.pipeManager import pipe_widgets
+from apps.pipeManager import manager_utils
 from core.hutils import logger
+from typing import *
 
 log = logger.setup_logger()
 log.debug("manager_gui.py loaded")
@@ -57,21 +63,24 @@ class ProjectOverview(QtWidgets.QWidget):
     Project Overview Panel where I can see and edit all projects and shots. This is a project management tool
     and not a viewer.
     """
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, font_scale: float = 1.0):
         super(ProjectOverview, self).__init__(parent)
 
-        # app fonts and stylesheets
-        self.button_font = QtGui.QFont("Helvetica", 15, QtGui.QFont.Bold)
-        self.dropdown_font = QtGui.QFont("Helvetica", 15, QtGui.QFont.Light)
-        self.tree_font = QtGui.QFont("Helvetica", 23, QtGui.QFont.Bold)
-        self.tree_color = QtGui.QColor(100, 100, 100)
-        self.title_font = QtGui.QFont("Helvetica", 40, QtGui.QFont.Bold)
+        small_font = int(15 * font_scale)
+        large_font = int(40 * font_scale)
+        medium_font = int(25 * font_scale)
+        self.button_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Bold)
+        self.dropdown_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Light)
+        self.tree_font = QtGui.QFont("Helvetica",medium_font, QtGui.QFont.Bold)
+        self.title_font = QtGui.QFont("Helvetica", large_font, QtGui.QFont.Bold)
         self.title_font.setItalic(True)
-        self.subtitle_font = QtGui.QFont("Helvetica", 16, QtGui.QFont.Light)
+        self.subtitle_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Light)
         self.subtitle_font.setItalic(True)
-        self.watermark_font = QtGui.QFont("Helvetica", 20, QtGui.QFont.Light)
-        self.date_font = QtGui.QFont("Helvetica", 20, QtGui.QFont.Bold, italic=True)
-        self.filepath_font = QtGui.QFont("Helvetica", 15, QtGui.QFont.Bold, italic=True)
+        self.watermark_font = QtGui.QFont("Helvetica", medium_font, QtGui.QFont.Light)
+        self.date_font = QtGui.QFont("Helvetica", medium_font, QtGui.QFont.Bold, italic=True)
+        self.filepath_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Bold, italic=True)
+        self.drag_drop_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Light)
+        self.tree_color = QtGui.QColor(100, 100, 100)
         self.shot_color = QtGui.QColor(60, 110, 200)
         self.project_color = QtGui.QColor(200, 110, 60)
         self.date_color = QtGui.QColor(100, 100, 100)
@@ -87,7 +96,7 @@ class ProjectOverview(QtWidgets.QWidget):
         # create a spacer element
         self.spacer = QtWidgets.QLineEdit()
         self.spacer.setReadOnly(True)
-        self.spacer.setVisible(True)
+        # self.spacer.setVisible(True)
         self.spacer.setFrame(False)
         self.spacer.setStyleSheet(self.window_stylesheet)
         self.spacer.setFocusPolicy(QtCore.Qt.NoFocus)
@@ -241,7 +250,7 @@ class ProjectOverview(QtWidgets.QWidget):
         self.drag_drop_button.setFlat(True)
         self.drag_drop_button.setStyleSheet("border: 2px solid rgb(30, 30, 30);")
         self.drag_drop_button.setFixedHeight(100)
-        self.drag_drop_button.setFont(QtGui.QFont("Helvetica", 15, QtGui.QFont.Light))
+        self.drag_drop_button.setFont(self.drag_drop_font)
         self.drag_drop_button.setAcceptDrops(True)
         self.drag_drop_button.dragEnterEvent = self.dragEnterEvent
         self.drag_drop_button.dropEvent = self.dropEvent
@@ -396,40 +405,41 @@ class ProjectOverview(QtWidgets.QWidget):
         Drop event.
         :param event: The event.
         """
-        filepath = ''
-        target_location = self.drag_drop_combo.currentText()
-
-        if event.mimeData().hasUrls():
-            for url in event.mimeData().urls():
-                filepath = url.toLocalFile()
-        else:
-            event.ignore()
-
-        if filepath == '':
-            return False
-
-        try:
-            selected_project = self.get_top_parent(self.tree.selectedItems()[0])
-        except IndexError:
-            selected_project = None
-
-        project_name = selected_project.text(0).replace(" ", "_").lower()
-        selected_shot = self.tree.selectedItems()[0]
-        shot_name = selected_shot.text(0).replace(" ", "_")
-        project_list = [proj.name for proj in self.database.get_projects()]
-
-        if project_name in project_list:
-            project_object = self.database.get_project(project_name)
-            shot_list = [shot.name for shot in project_object.get_shots()]
-            if shot_name in shot_list:
-                shot_object = project_object.get_shot(shot_name)
-                manager_utils.ingest_file(filepath, target_location, project_object, shot_object)
-                return True
-            # its a valid project and should at least be added here
-            return True
-        else:
-            # its not a valid project or shot, so lets add it globally
-            return True
+        # filepath = ''
+        # target_location = self.drag_drop_combo.currentText()
+        #
+        # if event.mimeData().hasUrls():
+        #     for url in event.mimeData().urls():
+        #         filepath = url.toLocalFile()
+        # else:
+        #     event.ignore()
+        #
+        # if filepath == '':
+        #     return False
+        #
+        # try:
+        #     selected_project = self.get_top_parent(self.tree.selectedItems()[0])
+        # except IndexError:
+        #     selected_project = None
+        #
+        # project_name = selected_project.text(0).replace(" ", "_").lower()
+        # selected_shot = self.tree.selectedItems()[0]
+        # shot_name = selected_shot.text(0).replace(" ", "_")
+        # project_list = [proj.name for proj in self.database.get_projects()]
+        #
+        # if project_name in project_list:
+        #     project_object = self.database.get_project(project_name)
+        #     shot_list = [shot.name for shot in project_object.get_shots()]
+        #     if shot_name in shot_list:
+        #         shot_object = project_object.get_shot(shot_name)
+        #         manager_utils.ingest_file(filepath, target_location, project_object, shot_object)
+        #         return True
+        #     # its a valid project and should at least be added here
+        #     return True
+        # else:
+        #     # its not a valid project or shot, so lets add it globally
+        #     return True
+        raise NotImplementedError
 
     def remove_project(self) -> bool:
         """
@@ -530,10 +540,10 @@ class ProjectOverview(QtWidgets.QWidget):
         """
         raise NotImplementedError
 
-    def get_expansion_state(self) -> tuple[list[str], list[str]]:
+    def get_expansion_state(self) -> Tuple[List[str], List[str]]:
         """
         Get the expansion state of the tree
-        :return: A tuple containing the expanded projects and shots
+        :return: A Tuple containing the expanded projects and shots
         """
         expanded_projects = []
         expanded_shots = []
@@ -550,7 +560,7 @@ class ProjectOverview(QtWidgets.QWidget):
 
         return expanded_projects, expanded_shots
 
-    def restore_expansion_state(self, expansion_state: tuple[list[str], list[str]]) -> bool:
+    def restore_expansion_state(self, expansion_state: Tuple[List[str], List[str]]) -> bool:
         """
         Restore the expansion state of the tree
         :param expansion_state: The expansion state to restore

@@ -10,6 +10,11 @@ import core.constants as constants
 from assets import imageSequence, projectFile
 from core.hutils import logger, system
 
+import sys
+
+if sys.version_info <= (3, 8):
+    from typing_extensions import TypedDict, Literal, overload
+
 if TYPE_CHECKING:
     from core import project
 
@@ -22,8 +27,8 @@ class ShotDict(TypedDict):
     frame_start: int
     frame_end: int
     project_name: str
-    tags: Union[list[str], None]
-    user_data: Union[dict[Any, Any], None]
+    tags: Union[List[str], None]
+    user_data: Union[Dict[Any, Any], None]
 
 
 class Shot:
@@ -32,8 +37,8 @@ class Shot:
     """
 
     def __init__(self, shot_name: str, project_instance: 'project.Project', frame_start: int = constants.FRAME_START,
-                 frame_end: int = constants.FRAME_END, tags: Union[list[str], None] = None,
-                 user_data: Union[dict[Any, Any], None] = None):
+                 frame_end: int = constants.FRAME_END, tags: Union[List[str], None] = None,
+                 user_data: Union[Dict[Any, Any], None] = None):
         """
         Creates a shot object. Requires a shot name and a project object to connect to. The project is linked to
         the shot object so that various shot properties can be inferred from the project object.
@@ -41,7 +46,7 @@ class Shot:
         :param object project_instance: Project object that the shot belongs to
         :param int frame_start: Starting frame of the shot
         :param int frame_end: Ending frame of the shot
-        :param list[str] tags: List of tags for the shot
+        :param List[str] tags: List of tags for the shot
         :param dict user_data: User data for the shot if any. This can be used to store custom data per shot.
         """
 
@@ -132,14 +137,21 @@ class Shot:
             f"{self.base_path}/{self.name}/{constants.WORKING_FOLDER}/{constants.HOUDINI_FOLDER}/")
         return houdini_path
 
-    def get_tags(self) -> list[str]:
+    def get_cache_path(self) -> str:
+        """
+        Returns the path of the cache folder.
+        :return: str cache path
+        """
+        return f"{self.base_path}/{constants.OUTPUT_FOLDER}/{constants.CACHE_FOLDER}/"
+
+    def get_tags(self) -> List[str]:
         """
         Returns the tags of the shot.
-        :return: list[str] tags
+        :return: List[str] tags
         """
         return self.tags
 
-    def get_comps(self) -> list['imageSequence.GenericImageSequence']:
+    def get_comps(self) -> List['imageSequence.GenericImageSequence']:
         """
         Get list of comps for the project
         :return: list of comps
@@ -147,18 +159,18 @@ class Shot:
         comp_sequences = imageSequence.sequences_from_directory(self.get_comps_path())
         return comp_sequences
 
-    def get_plates(self) -> list['imageSequence.GenericImageSequence']:
+    def get_plates(self) -> List['imageSequence.GenericImageSequence']:
         """
         Returns the plates contained in the plate folder.
-        :return: list[str] plates
+        :return: List[str] plates
         """
         plate_sequences = imageSequence.sequences_from_directory(self.get_plate_path())
         return plate_sequences
 
-    def get_project_files(self) -> list[projectFile.GenericProjectFile]:
+    def get_project_files(self) -> List[projectFile.GenericProjectFile]:
         """
         Returns the project files contained in the nuke and houdini folders.
-        :return: list[str] project files
+        :return: List[str] project files
         """
         nuke_path = self.get_nuke_path()
         houdini_path = self.get_houdini_path()
@@ -167,17 +179,17 @@ class Shot:
         houdini_files = projectFile.project_files_from_directory(houdini_path)
         return nuke_files + houdini_files
 
-    def get_renders(self) -> list[str]:
+    def get_renders(self) -> List[str]:
         """
         Returns the renders contained in the render folder.
-        :return: list[str] renders
+        :return: List[str] renders
         """
         raise NotImplementedError
 
-    def get_assets(self) -> list[str]:
+    def get_assets(self) -> List[str]:
         """
         Returns the assets contained in the shot.
-        :return: list[str] assets
+        :return: List[str] assets
         """
         assets = []
         assets.extend(self.get_comps())
@@ -211,7 +223,7 @@ class Shot:
         else:
             user_data = shot_dictionary['user_data']
 
-        tags: Union[list[str], None]
+        tags: Union[List[str], None]
         if not shot_dictionary.get('tags'):
             tags = []
         else:

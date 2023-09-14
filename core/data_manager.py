@@ -82,7 +82,7 @@ class ProjectDataManager:
 
         return self.accessor.save_data(self.data)
 
-    def get_projects(self) -> list[project.Project]:
+    def get_projects(self) -> List[project.Project]:
         """
         Builds a list of project.Project objects from the current data.
         """
@@ -157,25 +157,25 @@ class ProjectDataManager:
 
         return True
 
-    @staticmethod
-    def build_project_directories(project_instance: project.Project) -> bool:
-        """
-        Builds the project directories for a given project instance.
-        param project.Project project_instance: project instance to build directories for
-        :return: True if successful
-        """
-        log.warning(f"Building project directories for {project_instance.name}")
-        return False
-
-    @staticmethod
-    def build_shot_directories(shot_instance: shot.Shot) -> bool:
-        """
-        Builds the shot directories for a given shot instance.
-        param shot.Shot shot_instance: shot instance to build directories for
-        :return: True if successful
-        """
-        log.warning(f"Building shot directories for {shot_instance.name}")
-        return False
+    # @staticmethod
+    # def build_project_directories(project_instance: project.Project) -> bool:
+    #     """
+    #     Builds the project directories for a given project instance.
+    #     param project.Project project_instance: project instance to build directories for
+    #     :return: True if successful
+    #     """
+    #     log.warning(f"Building project directories for {project_instance.name}")
+    #     return False
+    #
+    # @staticmethod
+    # def build_shot_directories(shot_instance: shot.Shot) -> bool:
+    #     """
+    #     Builds the shot directories for a given shot instance.
+    #     param shot.Shot shot_instance: shot instance to build directories for
+    #     :return: True if successful
+    #     """
+    #     log.warning(f"Building shot directories for {shot_instance.name}")
+    #     return False
 
     def project_from_filepath(self, filepath: str) -> project.Project:
         """
@@ -433,8 +433,8 @@ def _generate_directories(folder_dictionary) -> bool:
     :return: True if successful
     """
 
-    warnings: list[str] = []
-    info: list[str] = []
+    warnings: List[str] = []
+    info: List[str] = []
 
     for key, value in folder_dictionary.items():
         if isinstance(value, dict):

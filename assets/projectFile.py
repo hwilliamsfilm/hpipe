@@ -64,7 +64,7 @@ def project_file_from_filepath(project_filepath: 'system.Filepath') -> 'GenericP
         return GenericProjectFile(project_filepath)
 
 
-def project_files_from_directory(project_directory: 'system.Directory') -> list['GenericProjectFile']:
+def project_files_from_directory(project_directory: 'system.Directory') -> List['GenericProjectFile']:
     """
     Returns a list of GenericProjectFile objects from a directory.
     :param project_directory: Directory to search for project files.

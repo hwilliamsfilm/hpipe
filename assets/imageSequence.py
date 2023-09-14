@@ -22,7 +22,7 @@ class GenericImageSequence(asset.Asset):
     """
     Class for an image sequence. Stores related images as a list of filepaths.
     """
-    def __init__(self, filepaths: list['system.Filepath'], asset_name: str = '',
+    def __init__(self, filepaths: List['system.Filepath'], asset_name: str = '',
                  start_frame: int = 0, end_frame: int = 0):
         super().__init__(asset_name)
 
@@ -167,7 +167,7 @@ class ExrImageSequence(GenericImageSequence):
     """
     Class for an exr image sequence. Stores related images as a list of filepaths.
     """
-    def __init__(self, filepaths: list['system.Filepath'], asset_name: str = '',
+    def __init__(self, filepaths: List['system.Filepath'], asset_name: str = '',
                  start_frame: int = 0, end_frame: int = 0):
         super().__init__(filepaths, asset_name, start_frame, end_frame)
 
@@ -183,7 +183,7 @@ class JpgImageSequence(GenericImageSequence):
     """
     Class for a jpg image sequence. Stores related images as a list of filepaths.
     """
-    def __init__(self, filepaths: list['system.Filepath'], asset_name: str = '',
+    def __init__(self, filepaths: List['system.Filepath'], asset_name: str = '',
                  start_frame: int = 0, end_frame: int = 0):
         super().__init__(filepaths, asset_name, start_frame, end_frame)
 
@@ -196,7 +196,7 @@ class PngImageSequence(GenericImageSequence):
     """
     Class for a png image sequence. Stores related images as a list of filepaths.
     """
-    def __init__(self, filepaths: list['system.Filepath'], asset_name: str = '',
+    def __init__(self, filepaths: List['system.Filepath'], asset_name: str = '',
                  start_frame: int = 0, end_frame: int = 0):
         super().__init__(filepaths, asset_name, start_frame, end_frame)
 
@@ -205,7 +205,7 @@ class PngImageSequence(GenericImageSequence):
                f"from <{self.filepaths[0].filepath_path}>"
 
 
-def sequence_factory(file_paths: list['system.Filepath'], file_name: str = '') -> GenericImageSequence:
+def sequence_factory(file_paths: List['system.Filepath'], file_name: str = '') -> GenericImageSequence:
     """
     Factory function for creating image sequences from a list of filepaths.
     :param file_paths: List of filepaths
@@ -223,7 +223,7 @@ def sequence_factory(file_paths: list['system.Filepath'], file_name: str = '') -
         raise ValueError(f"Could not create image sequence from {file_paths}.")
 
 
-def sequences_from_directory(directory: system.Directory) -> list[GenericImageSequence]:
+def sequences_from_directory(directory: system.Directory) -> List[GenericImageSequence]:
     """
     Returns a list of image sequences from a directory. We assume that within the directory, there are subdirectories
     that contain image sequences. So each subdirectory is a version where multiple image sequences are stored.
@@ -233,7 +233,7 @@ def sequences_from_directory(directory: system.Directory) -> list[GenericImageSe
     log.debug(directory.directory_path)
     directory_sequences = []
 
-    sequences_dictionary: dict[str, list[system.Filepath]] = {}
+    sequences_dictionary: dict[str, List[system.Filepath]] = {}
     for root, dirs, files in os.walk(directory.directory_path):
         for file in files:
             basename = '_'.join(file.split('_')[:-1])

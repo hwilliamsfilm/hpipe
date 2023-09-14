@@ -1,6 +1,11 @@
-from PySide6 import QtWidgets, QtCore
+import sys
+if sys.version_info <= (3, 8):
+    from PySide2 import QtWidgets, QtCore
+else:
+    from PySide6 import QtWidgets, QtCore
 from collections import OrderedDict
-import manager_utils
+
+from apps.pipeManager import manager_utils
 
 
 class EditableDelegate(QtWidgets.QStyledItemDelegate):

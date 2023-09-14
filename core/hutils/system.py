@@ -35,7 +35,7 @@ class Directory:
     def __repr__(self):
         return f'Directory({self.directory_path})'
 
-    def get_files(self) -> list['Filepath']:
+    def get_files(self) -> List['Filepath']:
         """
         Returns a list of all files in the directory.
         """

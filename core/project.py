@@ -10,6 +10,10 @@ from typing import *
 import core.constants as constants
 from core import shot
 from core.hutils import logger, manager_utils
+import sys
+
+if sys.version_info <= (3, 8):
+    from typing_extensions import TypedDict, Literal, overload
 
 log = logger.setup_logger()
 log.debug("project.py loaded")
@@ -58,7 +62,7 @@ class Project:
         return f"Project <{self.name.upper()}> {self.description}, created on {self.date}, " \
                f"with {len(self.shots)} shots."
 
-    def get_shots(self) -> list[shot.Shot]:
+    def get_shots(self) -> List[shot.Shot]:
         """
         Returns the list of shots in the project.
         :return: list of shots if they exist
