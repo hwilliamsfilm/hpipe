@@ -3,7 +3,6 @@ This file is run when Houdini starts up. It is used to set up the Houdini sessio
 """
 
 import hou
-# from core.hutils import system
 import sys
 from enum import Enum
 

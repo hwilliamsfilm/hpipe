@@ -10,7 +10,7 @@ else:
     from PySide6 import QtWidgets, QtCore, QtGui
 
 import core.project
-from core import data_manager
+from core import data_manager, project, shot
 from apps.pipeManager import pipe_widgets
 from apps.pipeManager import manager_utils
 from core.hutils import logger
@@ -49,11 +49,49 @@ class ProjectDialog(QtWidgets.QDialog):
         Returns a dictionary of the answers from the dialog.
         """
         answers = {}
-        for i in range(self.layout.count()):
-            item = self.layout.itemAt(i)
+        for i in range(self.layout.count()):  # type: ignore
+            item = self.layout.itemAt(i)  # type: ignore
             if isinstance(item, QtWidgets.QHBoxLayout):
-                dialogue_label = item.itemAt(0).widget().text()
-                dialogue_input = item.itemAt(1).widget().text()
+                dialogue_label = item.itemAt(0).widget().text()  # type: ignore
+                dialogue_input = item.itemAt(1).widget().text()  # type: ignore
+                answers[dialogue_label] = dialogue_input
+        return answers
+
+
+class ShotDialog(QtWidgets.QDialog):
+    def __init__(self, parent = None, project_for_shot: Union['project.Project', Any] = None):
+        super().__init__(parent)
+
+        self.setWindowTitle(f"Create Shot in {project_for_shot.name}")
+
+        prompts = ["Shot Name", "Start Frame", "End Frame"]
+        self.layout = QtWidgets.QVBoxLayout()  # type: ignore
+
+        for prompt in prompts:
+            prompt_layout = QtWidgets.QHBoxLayout()
+            label = QtWidgets.QLabel(prompt, self)
+            q_input = QtWidgets.QLineEdit(self)
+            prompt_layout.addWidget(label)
+            prompt_layout.addWidget(q_input)
+            self.layout.addLayout(prompt_layout)  # type: ignore
+
+        self.create_button = QtWidgets.QPushButton("Create", self)
+        self.create_button.clicked.connect(self.accept)
+
+        self.layout.addWidget(self.create_button)  # type: ignore
+
+        self.setLayout(self.layout)  # type: ignore
+
+    def get_answers(self) -> dict:
+        """
+        Returns a dictionary of the answers from the dialog.
+        """
+        answers = {}
+        for i in range(self.layout.count()):  # type: ignore
+            item = self.layout.itemAt(i)  # type: ignore
+            if isinstance(item, QtWidgets.QHBoxLayout):
+                dialogue_label = item.itemAt(0).widget().text()  # type: ignore
+                dialogue_input = item.itemAt(1).widget().text()  # type: ignore
                 answers[dialogue_label] = dialogue_input
         return answers
 
@@ -69,17 +107,17 @@ class ProjectOverview(QtWidgets.QWidget):
         small_font = int(15 * font_scale)
         large_font = int(40 * font_scale)
         medium_font = int(25 * font_scale)
-        self.button_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Bold)
-        self.dropdown_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Light)
-        self.tree_font = QtGui.QFont("Helvetica",medium_font, QtGui.QFont.Bold)
-        self.title_font = QtGui.QFont("Helvetica", large_font, QtGui.QFont.Bold)
+        self.button_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Bold)  # type: ignore
+        self.dropdown_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Light)  # type: ignore
+        self.tree_font = QtGui.QFont("Helvetica",medium_font, QtGui.QFont.Bold)  # type: ignore
+        self.title_font = QtGui.QFont("Helvetica", large_font, QtGui.QFont.Bold)  # type: ignore
         self.title_font.setItalic(True)
-        self.subtitle_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Light)
+        self.subtitle_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Light)  # type: ignore
         self.subtitle_font.setItalic(True)
-        self.watermark_font = QtGui.QFont("Helvetica", medium_font, QtGui.QFont.Light)
-        self.date_font = QtGui.QFont("Helvetica", medium_font, QtGui.QFont.Bold, italic=True)
-        self.filepath_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Bold, italic=True)
-        self.drag_drop_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Light)
+        self.watermark_font = QtGui.QFont("Helvetica", medium_font, QtGui.QFont.Light)  # type: ignore
+        self.date_font = QtGui.QFont("Helvetica", medium_font, QtGui.QFont.Bold, italic=True)  # type: ignore
+        self.filepath_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Bold, italic=True)  # type: ignore
+        self.drag_drop_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Light)  # type: ignore
         self.tree_color = QtGui.QColor(100, 100, 100)
         self.shot_color = QtGui.QColor(60, 110, 200)
         self.project_color = QtGui.QColor(200, 110, 60)
@@ -99,13 +137,13 @@ class ProjectOverview(QtWidgets.QWidget):
         # self.spacer.setVisible(True)
         self.spacer.setFrame(False)
         self.spacer.setStyleSheet(self.window_stylesheet)
-        self.spacer.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.spacer.setFocusPolicy(QtCore.Qt.NoFocus)  # type: ignore
         self.spacer_layout = QtWidgets.QVBoxLayout()
         self.spacer_layout.addWidget(self.spacer)
 
         # add "sort by" dropdown
         self.sort_by_layout = QtWidgets.QHBoxLayout()
-        self.sort_by_layout.setAlignment(QtCore.Qt.AlignRight)
+        self.sort_by_layout.setAlignment(QtCore.Qt.AlignRight)  # type: ignore
         self.sort_by_label = QtWidgets.QLabel('Sort By:')
         self.sort_by_label.setFont(self.dropdown_font)
         self.sort_by_label.setStyleSheet(self.window_stylesheet)
@@ -122,7 +160,7 @@ class ProjectOverview(QtWidgets.QWidget):
         self.refresh_button.setFixedHeight(40)
         self.refresh_button.setFixedWidth(40)
         self.refresh_button.setFlat(True)
-        self.refresh_button.setCursor(QtCore.Qt.PointingHandCursor)
+        self.refresh_button.setCursor(QtCore.Qt.PointingHandCursor)  # type: ignore
         self.refresh_button.setToolTip('Refresh')
         self.refresh_button.setIconSize(QtCore.QSize(40, 40))
         self.refresh_button.setIcon(QtGui.QIcon(self.refresh_pixmap))
@@ -135,7 +173,7 @@ class ProjectOverview(QtWidgets.QWidget):
         self.icon = QtWidgets.QLabel()
         self.icon.setFixedSize(50, 50)
         self.icon_pixmap = QtGui.QPixmap('../../icons/germ.png')
-        self.icon_pixmap = self.icon_pixmap.scaled(self.icon.size(), QtCore.Qt.KeepAspectRatio)
+        self.icon_pixmap = self.icon_pixmap.scaled(self.icon.size(), QtCore.Qt.KeepAspectRatio)  # type: ignore
         self.icon.setPixmap(self.icon_pixmap)
         self.title_layout.addWidget(self.icon)
         self.title_label.setFont(self.title_font)
@@ -166,14 +204,14 @@ class ProjectOverview(QtWidgets.QWidget):
         self.tree.setColumnCount(4)
         self.tree.setHeaderHidden(True)
         self.tree.setFont(self.tree_font)
-        self.tree.header().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        self.tree.header().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
-        self.tree.header().setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+        self.tree.header().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)  # type: ignore
+        self.tree.header().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)  # type: ignore
+        self.tree.header().setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)  # type: ignore
         self.tree.header().setMinimumSectionSize(self.row_height)
         self.tree.setAlternatingRowColors(True)
         self.tree.header().setDefaultSectionSize(100)
         self.tree.setStyleSheet(self.alternating_color_stylesheet)
-        self.tree.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.tree.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)  # type: ignore
         self.tree.setUniformRowHeights(True)
         self.tree.setItemDelegate(pipe_widgets.EditableDelegate())
         self.tree.setItemDelegate(pipe_widgets.EditableDelegate())
@@ -187,7 +225,7 @@ class ProjectOverview(QtWidgets.QWidget):
         # Create button layout
         self.button_layout = QtWidgets.QVBoxLayout()
         self.button_layout.setSpacing(10)
-        self.button_layout.setAlignment(QtCore.Qt.AlignTop)
+        self.button_layout.setAlignment(QtCore.Qt.AlignTop)  # type: ignore
         self.tree_button_layout.addLayout(self.button_layout)
 
         # Add shot button
@@ -198,6 +236,15 @@ class ProjectOverview(QtWidgets.QWidget):
         self.button_layout.addWidget(self.add_shot_button)
         self.add_shot_button.setFont(self.button_font)
         self.add_shot_button.setStyleSheet(self.button_stylesheet)
+
+        # Remove shot button
+        self.remove_shot_button = QtWidgets.QPushButton('Remove Shot')
+        self.remove_shot_button.clicked.connect(self.remove_shot)
+        self.remove_shot_button.setFixedHeight(40)
+        self.remove_shot_button.setFixedWidth(200)
+        self.button_layout.addWidget(self.remove_shot_button)
+        self.remove_shot_button.setFont(self.button_font)
+        self.remove_shot_button.setStyleSheet(self.button_stylesheet)
 
         # Add "add project" button
         self.add_project_button = QtWidgets.QPushButton('Add Project')
@@ -252,8 +299,8 @@ class ProjectOverview(QtWidgets.QWidget):
         self.drag_drop_button.setFixedHeight(100)
         self.drag_drop_button.setFont(self.drag_drop_font)
         self.drag_drop_button.setAcceptDrops(True)
-        self.drag_drop_button.dragEnterEvent = self.dragEnterEvent
-        self.drag_drop_button.dropEvent = self.dropEvent
+        self.drag_drop_button.dragEnterEvent = self.dragEnterEvent  # type: ignore
+        self.drag_drop_button.dropEvent = self.dropEvent  # type: ignore
         self.drag_drop_layout.addWidget(self.drag_drop_button)
         self.drag_drop_combo_layout = QtWidgets.QVBoxLayout()
         self.drag_drop_combo = QtWidgets.QComboBox()
@@ -273,7 +320,7 @@ class ProjectOverview(QtWidgets.QWidget):
         self.watermark_label = QtWidgets.QLabel('www.huntervfx.com | 2023')
         self.watermark_label.setFont(self.watermark_font)
         self.watermark_label.setStyleSheet("color: rgb(200, 200, 200)")
-        self.watermark_label.setAlignment(QtCore.Qt.AlignBottom | QtCore.Qt.AlignRight)
+        self.watermark_label.setAlignment(QtCore.Qt.AlignBottom | QtCore.Qt.AlignRight)  # type: ignore
         self.main_layout.addWidget(self.watermark_label)
 
         # Connect signals
@@ -282,7 +329,7 @@ class ProjectOverview(QtWidgets.QWidget):
         self.save_button.clicked.connect(self.save)
 
         # Refresh
-        self.sorted_data = {}
+        self.sorted_data: Dict[Any, Any] = {}
         self.refresh_tree()
 
     def refresh_tree(self, refresh_data=False) -> None:
@@ -319,7 +366,7 @@ class ProjectOverview(QtWidgets.QWidget):
                 item.setText(0, str(key))
                 item.setText(1, str(value))
                 parent.addChild(item)
-                item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+                item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)  # type: ignore
 
     def format_tree(self) -> None:
         """
@@ -355,7 +402,7 @@ class ProjectOverview(QtWidgets.QWidget):
             project_title.setText(1, str(project_date))
             project_title.setText(2, str(project_path))
             project_title.setForeground(1, self.date_color)
-            project_title.setFont(1,self.date_font)
+            project_title.setFont(1, self.date_font)
             project_title.setForeground(2, self.date_color)
             project_title.setFont(2, self.filepath_font)
 
@@ -364,7 +411,54 @@ class ProjectOverview(QtWidgets.QWidget):
         Add a shot to the project/database and tree widget.
         :return: True if successful.
         """
-        raise NotImplementedError
+        database = data_manager.ProjectDataManager()
+        selected_project = self.get_top_parent(self.tree.selectedItems()[0])
+        if not self.tree.selectedItems():
+            return False
+        try:
+            project_name = selected_project.text(0).replace(" ", "_").lower()
+            project = database.get_project(project_name)
+        except Exception as e:
+            log.error(e)
+            return False
+
+        dialog = ShotDialog(self, project)
+        answers: Dict[str, str] = {}
+        if dialog.exec_():
+            answers = dialog.get_answers()
+
+        project.create_shot(answers.get('Shot Name'),
+                            frame_start=int(answers.get('Start Frame')),
+                            frame_end=int(answers.get('End Frame')))
+        log.debug(answers)
+        database.update_project(project)
+        self.refresh_tree(refresh_data=True)
+        return True
+
+    def remove_shot(self) -> bool:
+        """
+        Remove a shot from the project/database and tree widget.
+        :return: True if successful.
+        """
+        database = data_manager.ProjectDataManager()
+        selected_project = self.get_top_parent(self.tree.selectedItems()[0])
+        selected_shot = self.tree.selectedItems()[0].text(0)
+
+        if not selected_project or not selected_shot:
+            return False
+
+        try:
+            project_name = selected_project.text(0).replace(" ", "_").lower()
+            project = database.get_project(project_name)
+            shot = project.get_shot(selected_shot)
+        except Exception as e:
+            log.error(e)
+            return False
+
+        project.remove_shot(shot.name)
+        database.update_project(project)
+        self.refresh_tree(refresh_data=True)
+        return True
 
     def add_project(self) -> bool:
         """
@@ -389,7 +483,7 @@ class ProjectOverview(QtWidgets.QWidget):
 
         return True
 
-    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> bool:
+    def dragEnterEvent(self, event: QtGui.QDragEnterEvent):
         """
         Drag enter event.
         :param event: The event.
@@ -398,9 +492,8 @@ class ProjectOverview(QtWidgets.QWidget):
             event.accept()
         else:
             event.ignore()
-        return True
 
-    def dropEvent(self, event: QtGui.QDropEvent) -> bool:
+    def dropEvent(self, event: QtGui.QDropEvent):
         """
         Drop event.
         :param event: The event.
