@@ -1,9 +1,22 @@
 Repository Notes:
 
-This is my basic skeleton to an indie - vfx pipeline. Creates and maintains a database of projects, shots, assets in a
-json file. Additionally, it has a file management system that can be used to create and manage project assets.
-There are several convenient scripts and software implementations for Houdini and Nuke that can be used to make the
-pipeline more useful.
+PURPOSE:
+
+Unify DCCs to one core database and file management system for VFX projects. Small package of utility GUI apps to help artists.
+
+This will currently support and have features for:
+    > Houdini (Py3+) (Solaris, Arnold, Karma)
+    > Nuke (Py3+)
+    > Deadline
+    > RV
+    > USD
+Future implementations:
+    > Maya
+    > Blender
+
+Creates and maintains a database of projects, shots, assets in a json file. Additionally, it has a file management system
+that can be used to create and manage project assets. There are several convenient scripts and software implementations
+for Houdini and Nuke that can be used to make the pipeline more useful.
 
 Configuration file for the database and related properties is in core.constants.
 

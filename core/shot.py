@@ -7,7 +7,7 @@ using inheritance because shots can be used outside the project class.
 from typing import *
 
 import core.constants as constants
-from assets import imageSequence, projectFile
+from assets import imageSequence, projectFile, reviewable
 from core.hutils import logger, system
 
 import sys
@@ -95,13 +95,13 @@ class Shot:
             f"{self.base_path}/{self.name}/{constants.PLATE_FOLDER}/")
         return plate_path
 
-    def get_workarea_path(self) -> str:
+    def get_workarea_path(self) -> 'system.Directory':
         """
         Returns the path of the workarea folder
         :return: str workarea path
         """
         # return self.get_shot_path() + '/output/' + '_workarea/'
-        return f"{self.base_path}/{constants.OUTPUT_FOLDER}/{constants.WORKAREA_FOLDER}/"
+        return system.Directory(f"{self.base_path}/{constants.OUTPUT_FOLDER}/{constants.WORKAREA_FOLDER}/")
 
     def get_comps_path(self) -> 'system.Directory':
         """
@@ -117,7 +117,7 @@ class Shot:
         Returns the path of the render folder
         :return: str render path
         """
-        return f"{self.base_path}/{constants.OUTPUT_FOLDER}/{constants.RENDER_FOLDER}/"
+        return system.Directory(f"{self.base_path}/{constants.OUTPUT_FOLDER}/{constants.RENDER_FOLDER}/")
 
     def get_nuke_path(self):
         """
@@ -151,21 +151,21 @@ class Shot:
         """
         return self.tags
 
-    def get_comps(self) -> List['imageSequence.GenericImageSequence']:
+    def get_comps(self) -> List['reviewable.Reviewable']:
         """
         Get list of comps for the project
         :return: list of comps
         """
-        comp_sequences = imageSequence.sequences_from_directory(self.get_comps_path())
-        return comp_sequences
+        comps = reviewable.reviewables_from_directory(self.get_comps_path())
+        return comps
 
-    def get_plates(self) -> List['imageSequence.GenericImageSequence']:
+    def get_plates(self) -> List['reviewable.Reviewable']:
         """
         Returns the plates contained in the plate folder.
         :return: List[str] plates
         """
-        plate_sequences = imageSequence.sequences_from_directory(self.get_plate_path())
-        return plate_sequences
+        plates = reviewable.reviewables_from_directory(self.get_plate_path())
+        return plates
 
     def get_project_files(self) -> List[projectFile.GenericProjectFile]:
         """

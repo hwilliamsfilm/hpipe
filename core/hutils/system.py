@@ -58,6 +58,28 @@ class Directory:
         """
         return os.path.basename(self.directory_path)
 
+    def get_subdirectories(self) -> List['Directory']:
+        """
+        Returns a list of all subdirectories in the directory.
+        :return: list of subdirectories
+        """
+        subdirectories: list[Directory] = []
+        for root, dirs, files in os.walk(self.directory_path):
+            for directory in dirs:
+                subdirectories.append(Directory(os.path.join(root, directory)))
+        return subdirectories
+
+    def get_children_directories(self) -> List['Directory']:
+        """
+        Returns a list of all subdirectories in the directory. Does not recurse.
+        :return: list of subdirectories
+        """
+        subdirectories: list[Directory] = []
+        for f in os.listdir(self.directory_path):
+            if os.path.isdir(os.path.join(self.directory_path, f)):
+                subdirectories.append(Directory(os.path.join(self.directory_path, f)))
+        return subdirectories
+
     def system_path(self) -> str:
         """
         Returns the system path of the directory.

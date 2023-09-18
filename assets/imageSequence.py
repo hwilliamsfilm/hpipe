@@ -1,11 +1,20 @@
 import os
 from typing import *
 
+OIIO = False
 try:
     import oiio
     from oiio import ImageBuf, ImageSpec, ImageOutput
+    OIIO_LOADED = True
 except ImportError:
     pass
+try:
+    import OpenIMageIO as oiio
+    from OpenImageIO import ImageBuf, ImageSpec, ImageOutput
+    OIIO_LOADED = True
+except ImportError:
+    pass
+
 
 from assets import asset
 from core.hutils import logger, system
@@ -223,11 +232,12 @@ def sequence_factory(file_paths: List['system.Filepath'], file_name: str = '') -
         raise ValueError(f"Could not create image sequence from {file_paths}.")
 
 
-def sequences_from_directory(directory: system.Directory) -> List[GenericImageSequence]:
+def sequences_from_directory(directory: system.Directory, temp: bool = True) -> List[GenericImageSequence]:
     """
     Returns a list of image sequences from a directory. We assume that within the directory, there are subdirectories
     that contain image sequences. So each subdirectory is a version where multiple image sequences are stored.
     :param directory: Directory to search for image sequences
+    :param temp: Whether to include temp files in the search
     :return: List of image sequences
     """
     log.debug(directory.directory_path)
@@ -241,6 +251,10 @@ def sequences_from_directory(directory: system.Directory) -> List[GenericImageSe
 
             if full_path == '' or full_path is None:
                 log.warning(f"Could not find full path for {file}. Skipping..")
+                continue
+
+            if not temp and 'temp' in full_path or 'tmp' in full_path:
+                log.warning(f"Skipping temp file {file}.")
                 continue
 
             if system.Filepath(full_path).get_extension() not in ['exr', 'jpg', 'png']:

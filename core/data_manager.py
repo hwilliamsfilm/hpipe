@@ -97,6 +97,13 @@ class ProjectDataManager:
 
         return project_list
 
+    def get_project_names(self) -> List[str]:
+        """
+        Builds a list of project names from the current data.
+        :return: list of project names
+        """
+        return [project_instance.name for project_instance in self.get_projects()]
+
     def get_project(self, project_name: str) -> project.Project:
         """
         Builds a project.Project object from the current data given a project name.
