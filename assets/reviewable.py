@@ -76,6 +76,9 @@ class Reviewable(asset.Asset):
         reviewable_name = asset_dict['reviewable_name']
         return cls(reviewable_name, reviewable_directory)
 
+    def to_dict(self) -> Dict[str, Any]:
+        pass
+
     def is_valid(self) -> bool:
         """
         Checks if the reviewable is valid. A reviewable is valid if it has at least one element and is in a valid
