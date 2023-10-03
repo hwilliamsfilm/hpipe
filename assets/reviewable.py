@@ -58,6 +58,24 @@ class Reviewable(asset.Asset):
         return f"Reviewable <{self.asset_name}> from " \
                f"<{self.reviewable_directory}>"
 
+    def get_filepath(self) -> 'system.Filepath':
+        """
+        Gets the filepath of the asset.
+        :return: Filepath of the asset.
+        """
+        return self.reviewable_directory
+
+    @classmethod
+    def from_dict(cls, asset_dict: Dict[Any, Any]) -> Union[None, Any]:
+        """
+        Converts a dictionary to an asset.
+        :param asset_dict: Dictionary to convert.
+        :return: None
+        """
+        reviewable_directory = system.Filepath(asset_dict['reviewable_directory'])
+        reviewable_name = asset_dict['reviewable_name']
+        return cls(reviewable_name, reviewable_directory)
+
     def is_valid(self) -> bool:
         """
         Checks if the reviewable is valid. A reviewable is valid if it has at least one element and is in a valid

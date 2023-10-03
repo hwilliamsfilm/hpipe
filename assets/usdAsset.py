@@ -25,6 +25,13 @@ class UsdAsset(asset.Asset):
         return f"ProjectFile <{self.filepath}> from " \
                f"<{self.filepath.get_parent_directory()}>"
 
+    def get_filepath(self) -> 'system.Filepath':
+        """
+        Gets the filepath of the asset.
+        :return: Filepath of the asset.
+        """
+        return self.filepath
+
     def generate_asset_filepath(self) -> 'system.Filepath':
         """
         Generates a filepath for the asset.

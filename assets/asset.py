@@ -35,3 +35,28 @@ class Asset(ABC):
         self.asset_name = asset_name
         self.asset_type = AssetType.GENERIC
         pass
+
+    @abstractmethod
+    def get_filepath(self) -> Union['system.Filepath', 'system.Directory']:
+        """
+        Gets the filepath of the asset.
+        :return: Filepath of the asset.
+        """
+        pass
+
+    @abstractmethod
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Converts the asset to a dictionary.
+        :return: Dictionary representation of the asset.
+        """
+        pass
+
+    @abstractmethod
+    def from_dict(self, asset_dict: Dict[Any, Any]) -> Union[None, Any]:
+        """
+        Converts a dictionary to an asset.
+        :param asset_dict: Dictionary to convert.
+        :return: None
+        """
+        pass

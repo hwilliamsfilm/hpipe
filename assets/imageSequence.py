@@ -52,6 +52,36 @@ class GenericImageSequence(asset.Asset):
         return f"ImageSequence {self.get_start_frame()}-{self.get_end_frame()} @ <{self.asset_name}> " \
                f"from <{self.filepaths[0].filepath_path}>"
 
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Converts the asset to a dictionary.
+        :return: Dictionary representation of the asset.
+        """
+        return {
+            'asset_name': self.asset_name,
+            'asset_type': self.asset_type.value,
+            'start_frame': self.start_frame,
+            'end_frame': self.end_frame,
+            'filepaths': [filepath.filepath_path for filepath in self.filepaths]
+        }
+
+    @classmethod
+    def from_dict(asset_dict: Dict[Any, Any]) -> 'GenericImageSequence':
+        """
+        Converts a dictionary to an asset.
+        :param asset_dict: Dictionary to convert.
+        :return: None
+        """
+        return GenericImageSequence(asset_dict['filepaths'], asset_dict['asset_name'],
+                                    asset_dict['start_frame'], asset_dict['end_frame'])
+
+    def get_filepath(self) -> 'system.Filepath':
+        """
+        Gets the filepath of the image sequence.
+        :return: Filepath of the image sequence.
+        """
+        return self.get_parent_directory()
+
     def get_start_frame(self) -> int:
         """
         Returns the start frame of the image sequence.

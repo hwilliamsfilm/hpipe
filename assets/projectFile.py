@@ -23,6 +23,24 @@ class GenericProjectFile(asset.Asset):
         return f"ProjectFile <{self.filepath}> from " \
                f"<{self.filepath.get_parent_directory()}>"
 
+    def get_filepath(self) -> 'system.Filepath':
+        """
+        Gets the filepath of the asset.
+        :return: Filepath of the asset.
+        """
+        return self.filepath
+    
+    @classmethod
+    def from_dict(cls, asset_dict: Dict[Any, Any]) -> Union[None, Any]:
+        """
+        Converts a dictionary to an asset.
+        :param asset_dict: Dictionary to convert.
+        :return: None
+        """
+        file_path = system.Filepath(asset_dict['filepath'])
+        asset_name = asset_dict['asset_name']
+        return cls(file_path, asset_name)
+
 
 class HoudiniProjectFile(GenericProjectFile):
     """
