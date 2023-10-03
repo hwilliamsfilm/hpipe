@@ -11,5 +11,5 @@ hPipe is a collection of tools focused around a small portable USD VFX pipeline.
 
 ## Screenshots
 
-![App Screenshot](./Screenshot 2023-10-03 at 10.20.49 AM.png)
+![App Screenshot](https://github.com/hwilliamsfilm/hpipe/blob/82a6ac3bde21d9ba6a696b8acd5ee7e8b1f59659/Screenshot%202023-10-03%20at%2010.20.49%20AM.png?raw=true)
 
