@@ -52,6 +52,7 @@ class Reviewable(asset.Asset):
     def __init__(self, reviewable_name: str, reviewable_directory: 'system.Directory'):
         super().__init__(reviewable_name)
         self.reviewable_directory = reviewable_directory
+        self.asset_type = asset.AssetType.IMAGE_SEQUENCE
 
     def __repr__(self) -> str:
         return f"Reviewable <{self.asset_name}> from " \
@@ -69,7 +70,7 @@ class Reviewable(asset.Asset):
         # Would be too slow to check every element, might need to move to a database for caching.
         return True
 
-    def get_reviewable_image_sequences(self) -> list['imageSequence.GenericImageSequence']:
+    def get_reviewable_image_sequences(self) -> List['imageSequence.GenericImageSequence']:
         """
         Returns all image sequences in the reviewable.
         :return: List of image sequences in the reviewable.

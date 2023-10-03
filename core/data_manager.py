@@ -10,6 +10,7 @@ from typing import *
 
 from core import constants, project, shot
 from core.hutils import logger
+from assets import asset, usdAsset, reviewable, projectFile, imageSequence
 
 log = logger.setup_logger()
 log.debug("data_manager.py loaded")
@@ -21,7 +22,7 @@ class JsonDataAccessor:
     Project's database via json.
     """
 
-    def __init__(self, db_path: str = constants.DB_PATH):
+    def __init__(self, db_path):
         self.db_path = db_path
         self.data = self.get_data()
 
@@ -65,7 +66,7 @@ class ProjectDataManager:
     """
 
     def __init__(self):
-        self.accessor = JsonDataAccessor()
+        self.accessor = JsonDataAccessor(constants.DB_PATH)
         self.data = self.accessor.data
         self.archive_accessor = JsonDataAccessor(constants.ARCHIVE_DB_PATH)
 
@@ -163,26 +164,6 @@ class ProjectDataManager:
             return self.save()
 
         return True
-
-    # @staticmethod
-    # def build_project_directories(project_instance: project.Project) -> bool:
-    #     """
-    #     Builds the project directories for a given project instance.
-    #     param project.Project project_instance: project instance to build directories for
-    #     :return: True if successful
-    #     """
-    #     log.warning(f"Building project directories for {project_instance.name}")
-    #     return False
-    #
-    # @staticmethod
-    # def build_shot_directories(shot_instance: shot.Shot) -> bool:
-    #     """
-    #     Builds the shot directories for a given shot instance.
-    #     param shot.Shot shot_instance: shot instance to build directories for
-    #     :return: True if successful
-    #     """
-    #     log.warning(f"Building shot directories for {shot_instance.name}")
-    #     return False
 
     def project_from_filepath(self, filepath: str) -> project.Project:
         """
@@ -431,6 +412,66 @@ class ProjectDirectoryGenerator:
         _generate_directories(self.shot_structure)
 
         return True
+
+
+class AssetDataManager:
+    """
+    Assets data manager. This is used as the primary interface for the Asset database. Uses the
+    AbstractDataAccessor interface to access the database directly.
+    """
+    def __init__(self):
+        self.accessor = JsonDataAccessor(constants.ASSET_DB_PATH)
+        self.data = self.accessor.data
+        # self.archive_accessor = JsonDataAccessor(constants.ARCHIVE_ASSET_PATH)
+
+    def __repr__(self) -> str:
+        return f" Asset Data Manager @ {self.accessor.db_path}"
+
+    def add_asset(self, asset_instance: asset.Asset) -> bool:
+        """
+        Adds an asset to the database.
+        :param asset_instance: asset instance to add
+        :return: True if successful
+        """
+        if asset_instance.asset_name in self.data.keys():
+            raise ValueError(f"Asset {asset_instance.name} already exists in database at path {self.accessor.db_path}")
+
+        self.data[asset_instance.name] = asset_instance.to_dict()
+        self.save()
+        return True
+
+
+class AssetDirectoryGenerator:
+    """
+    Generates directory structures for Assets
+    """
+    def __init__(self, asset_instance: asset.Asset):
+
+        self.asset = asset_instance
+        self.asset_structure: dict[Any, Dict[Any, Any]] = constants.ASSET_STRUCTURE.copy()
+        self.set_asset_directories()
+        self.asset_name = f"{self.asset.asset_type}_{self.asset.asset_name}"
+
+    def set_asset_directories(self) -> bool:
+        """
+        Generates the directories for an asset instance.
+        :return: True if successful
+        """
+        root_constant = constants.ASSETS_ROOT
+
+        asset_path = f'{root_constant}/{self.asset_name}'
+        self.asset_structure[asset_path] = self.asset_structure.pop("name")
+
+        for key, value in self.asset_structure[asset_path].items():
+            self.asset_structure[asset_path][key] = f"{asset_path}/{key}"
+
+        log.info(f"Generating directories for Asset {self.asset_name}")
+        log.debug(f"Project structure: {self.asset_structure}")
+
+        _generate_directories(self.asset_structure)
+
+        return True
+
 
 
 def _generate_directories(folder_dictionary) -> bool:

@@ -66,6 +66,7 @@ def set_global(global_name: str, global_value: str) -> bool:
     # Need to set in the hou.putenv (true environment variable) and the variables and aliases which
     # is the hscript version
 
+    log.debug(f'Set {global_name} to {global_value}')
     hou.putenv(global_name, global_value)
     hou.hscript("setenv {0} = {1}".format(global_name, global_value))
     return True
@@ -197,9 +198,9 @@ def set_shot(kwargs) -> bool:
     set_global('SHOT', shot.name)
     set_global('SHOT_PATH', shot.get_shot_path())
     set_global('SAVE_PATH', shot.get_houdini_path().system_path())
-    set_global('OUTPUT_PATH', shot.get_render_path())
+    set_global('OUTPUT_PATH', shot.get_render_path().system_path())
     set_global('CACHE_PATH', shot.get_cache_path())
-    set_global('RENDER_PATH', shot.get_render_path())
+    set_global('RENDER_PATH', shot.get_render_path().system_path())
     set_global('FSTART', str(shot.frame_start))
     set_global('FEND', str(shot.frame_end))
 

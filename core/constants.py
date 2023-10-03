@@ -21,6 +21,9 @@ ARCHIVE_ROOT = system.Filepath('Y:/projects/_archive/').system_path()
 # script deletes a file. It's up to the user to empty this folder.
 RECYCLE_BIN = system.Filepath('Y:/projects/_recycle_bin/').system_path()
 
+# Path to the Assets' archive root. This is where all assets will be stored.
+ASSETS_ROOT = system.Filepath(r'Y:/_global_assets/assets').system_path()
+
 # Directory structure for a project. This is used when creating a new project to create the necessary folders.
 # Would need to know the code intimately to change this as it would require some modifications to the projects' and
 # shot classes.
@@ -54,6 +57,16 @@ SHOT_STRUCTURE = {
         "trak": ''
     }
 }
+
+ASSET_STRUCTURE = {
+    "name": {
+        "thumbnail": '',
+        "notes": '',
+        "asset_root": '',
+        "preview": '',
+    }
+}
+
 
 # Names of the folders in the project root. These are used when creating a new project to create the necessary folders.
 # TODO: This should be moved to the project structure dict, or at least integrated with it for more easily changing
@@ -99,4 +112,23 @@ DB_TYPE = 'json'
 
 # Global assets folder. This is used by the PipeManager GUI to Ingest relevant files.
 GLOBAL_ASSETS = system.Filepath(r'Y:/_global_assets').system_path()
+
+# Asset database filepath - this is where the asset database is stored. This is used by the Asset Data Manager class to
+# load and save the asset database.
+# DB_PATH = system.Filepath(r'/Volumes/hlw01/project_db/projects_refactor.json').system_path()
+ASSET_DB_PATH = system.Filepath(r'Y:\project_db\assets.json').system_path()
+
+# Set default SHOT usd hierarchy:
+USD_HIERARCHY = {
+    'meta': {},
+    'world': {
+        'env': {},
+        'chr': {},
+        'prp': {},
+        'camera': {},
+        'light': {},
+        'fx': {},
+        'misc': {},
+    }
+}
 

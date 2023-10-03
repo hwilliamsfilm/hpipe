@@ -130,6 +130,12 @@ class Project:
 
         return shot_path
 
+    def create_project_USD(self):
+        """
+        Creates a project-level USD file that will be referenced by all the shots in the project.
+        """
+        raise NotImplementedError
+
     def create_shot(self, shot_name: str, frame_start: int = 1001, frame_end: int = 1100,
                     user_data: Union[Dict[Any, Any], None] = None, tags: Union[List[Any], None] = None) -> shot.Shot:
         """

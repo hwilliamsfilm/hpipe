@@ -17,6 +17,7 @@ class GenericProjectFile(asset.Asset):
     def __init__(self, filepath: 'system.Filepath', asset_name: str = ''):
         super().__init__(asset_name)
         self.filepath = filepath
+        self.asset_type = asset.AssetType.PROJECT_FILE
 
     def __repr__(self) -> str:
         return f"ProjectFile <{self.filepath}> from " \

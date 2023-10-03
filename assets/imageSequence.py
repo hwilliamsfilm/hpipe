@@ -46,6 +46,7 @@ class GenericImageSequence(asset.Asset):
 
         self.start_frame = start_frame
         self.end_frame = end_frame
+        self.asset_type = asset.AssetType.IMAGE_SEQUENCE
 
     def __repr__(self) -> str:
         return f"ImageSequence {self.get_start_frame()}-{self.get_end_frame()} @ <{self.asset_name}> " \

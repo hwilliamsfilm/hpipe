@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pythonPanelDocument>
+  <!-- This file contains definitions of Python interfaces and the
+ interfaces menu.  It should not be hand-edited when it is being
+ used by the application.  Note, that two definitions of the
+ same interface or of the interfaces menu are not allowed
+ in a single file. -->
+  <interface name="interface4" label="New Python Interface" icon="MISC_python" showNetworkNavigationBar="false" help_url="">
+    <script><![CDATA[########################################################################
+# Replace the sample code below with your own to create a
+# PyQt5 or PySide2 interface.  Your code must define an
+# onCreateInterface() function that returns the root widget of
+# your interface.
+#
+# The 'hutil.Qt' is for internal-use only.
+# It is a wrapper module that enables the sample code below to work with
+# either a Qt4 or Qt5 environment for backwards-compatibility.
+#
+# When developing your own Python Panel, import directly from PySide2
+# or PyQt5 instead of from 'hutil.Qt'.
+########################################################################
+
+#
+# SAMPLE CODE
+#
+from hutil.Qt import QtWidgets
+
+def onCreateInterface():
+    widget = QtWidgets.QLabel('Hello World!')
+    return widget
+]]></script>
+    <includeInToolbarMenu menu_position="109" create_separator="false"/>
+    <help><![CDATA[]]></help>
+  </interface>
+  <interface name="pipeDisplay" label="Pipe Display" icon="MISC_python" showNetworkNavigationBar="true" help_url="">
+    <script><![CDATA[from hutil.Qt import QtWidgets
+from apps.pipeDisplay import output_gui
+from importlib import reload
+reload(output_gui)
+
+def onCreateInterface():
+    widget = output_gui.OutputViewer(font_scale = .5)
+    return widget
+]]></script>
+    <includeInPaneTabMenu menu_position="0" create_separator="false"/>
+    <includeInToolbarMenu menu_position="107" create_separator="false"/>
+    <showInParametersPane optype=""/>
+    <help><![CDATA[]]></help>
+  </interface>
+</pythonPanelDocument>

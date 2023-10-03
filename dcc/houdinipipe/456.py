@@ -20,13 +20,16 @@ def update_scene_control() -> bool:
     Updates the scene control node to the latest version.
     :return: bool success
     """
-    for node in hou.node('/obj').children():
-        if node.type().name() == 'scene':
-            node.destroy()
-            hou.node('/obj').createNode('scene')
-    hou.node('/obj').createNode('scene')
+
+    scene_control_nodes = hou.objNodeTypeCategory().nodeType('hlw::scene::3.0')
+
+    for node in scene_control_nodes.instances():
+        node.destroy()
+
+    hou.node('/obj').createNode('hlw::scene::3.0')
     return True
 
 
 set_houdini_state()
 update_scene_control()
+
