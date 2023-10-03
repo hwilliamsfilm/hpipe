@@ -103,8 +103,8 @@ class ProjectDbTest:
         """
         Gets all comps in the project database
         """
-        example_project = self.db.get_project('wound_wood')
-        example_shot = example_project.get_shot('WW_072_0040')
+        example_project = self.db.get_project('test')
+        example_shot = example_project.get_shot('myShot')
         comps = example_shot.get_comps()
         plates = example_shot.get_plates()
 
@@ -127,8 +127,8 @@ class ProjectDbTest:
         """
         Gets all files in the project database
         """
-        example_project = self.db.get_project('wound_wood')
-        example_shot = example_project.get_shot('WW_072_0040')
+        example_project = self.db.get_project('test')
+        example_shot = example_project.get_shot('myShot')
         files = example_shot.get_project_files()
         has_files = len(files) > 0
         try:

@@ -159,6 +159,19 @@ class Project:
         self.shots.append(new_shot)
         return new_shot
 
+    def add_shot(self, shot_instance: shot.Shot) -> bool:
+        """
+        Adds a shot to the project.
+        :param shot.Shot shot_instance: shot instance to be added to the project
+        :returns: True if successful.
+        """
+        if shot_instance.name in [s.name for s in self.get_shots()]:
+            log.warning(f"Shot {shot_instance.name} already exists in project {self.name}")
+            return False
+
+        self.shots.append(shot_instance)
+        return True
+
     def remove_shot(self, shot_name: str) -> bool:
         """
         Removes shot from shot list.

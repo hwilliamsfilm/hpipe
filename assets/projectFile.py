@@ -2,6 +2,8 @@ from typing import *
 
 from assets import asset
 from core.hutils import logger, system
+from core import project
+# from core import data_manager
 
 if TYPE_CHECKING:
     pass
@@ -13,6 +15,7 @@ log.debug("projectFile.py loaded")
 class GenericProjectFile(asset.Asset):
     """
     Class for a project file. Stores the filepath to the file.
+    PROJECT FILE -> ../../../shot_task_desc_version.hiplc
     """
     def __init__(self, filepath: 'system.Filepath', asset_name: str = ''):
         super().__init__(asset_name)
@@ -29,7 +32,61 @@ class GenericProjectFile(asset.Asset):
         :return: Filepath of the asset.
         """
         return self.filepath
-    
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Converts the asset to a dictionary.
+        :return: Dictionary representation of the asset.
+        """
+        return {
+            'asset_name': self.asset_name,
+            'filepath': self.filepath.system_path()
+        }
+
+    def get_version(self) -> tuple[str, int]:
+        """
+        Gets the version of the asset.
+        assuming that the version if the last number in the filename
+        ex. /path/to/file_[A01].hipnc
+        :return: Major and minor version of the asset.
+        """
+        filepath = self.filepath
+        version_string = filepath.system_path().split('.')[-2].split('_')[-1]
+        version_letter: str = version_string[0]
+        version_number: int = int(version_string[1:])
+        return version_letter, version_number
+
+    def get_asset_name(self) -> str:
+        """
+        Gets the name of the current asset.
+        """
+        filename = self.filepath.get_filename()
+        return filename.split('_')[1]
+
+    def get_asset_description(self) -> str:
+        """
+        Gets the description of the current asset.
+        """
+        filename = self.filepath.get_filename()
+        return filename.split('_')[2]
+
+    def get_asset_shot(self) -> str:
+        """
+        Gets the shot of the current asset.
+        """
+        filename = self.filepath.get_filename()
+        return filename.split('_')[0]
+
+    def get_asset_project(self) -> str:
+        """
+        Gets the project of the current asset by looking at the parent directory.
+        """
+        filepath = self.filepath
+        directory_list = filepath.system_path().split('/')
+        project_index = directory_list.index('projects')
+        project = directory_list[project_index + 2]
+        return project
+
     @classmethod
     def from_dict(cls, asset_dict: Dict[Any, Any]) -> Union[None, Any]:
         """
@@ -52,6 +109,16 @@ class HoudiniProjectFile(GenericProjectFile):
     def __repr__(self) -> str:
         return f"HoudiniProjectFile <{self.filepath}> from " \
                f"<{self.filepath.get_parent_directory()}>"
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Converts the asset to a dictionary.
+        :return: Dictionary representation of the asset.
+        """
+        return {
+            'asset_name': self.asset_name,
+            'filepath': self.filepath.system_path()
+        }
 
 
 class NukeProjectFile(GenericProjectFile):

@@ -427,12 +427,16 @@ class ProjectOverview(QtWidgets.QWidget):
         if dialog.exec_():
             answers = dialog.get_answers()
 
-        project.create_shot(answers.get('Shot Name'),
-                            frame_start=int(answers.get('Start Frame')),
-                            frame_end=int(answers.get('End Frame')))
+        new_shot = shot.Shot(answers.get('Shot Name'),
+                             project,
+                             frame_start=int(answers.get('Start Frame')),
+                             frame_end=int(answers.get('End Frame')))
+
+        database.add_shot(project, new_shot)
         log.debug(answers)
         database.update_project(project)
         self.refresh_tree(refresh_data=True)
+        data_manager.ProjectDirectoryGenerator(shot_instance=new_shot, push_directories=True)
         return True
 
     def remove_shot(self) -> bool:

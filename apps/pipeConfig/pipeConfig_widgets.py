@@ -1,4 +1,10 @@
-from PySide6 import QtWidgets, QtCore
+try:
+    import hou
+    from PySide2 import QtWidgets, QtCore
+except Exception as e:
+    print(f'hou not found, not running in houdini: {e}')
+    from PySide6 import QtWidgets, QtCore
+
 from collections import OrderedDict
 import pipeConfig_utils
 

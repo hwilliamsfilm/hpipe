@@ -22,9 +22,17 @@ Reviewable Directory [RENDER]
     - deep
         - deep_###.exr
     - etc.
+Reviable Directory [Asset]
+    - thumbnail.jpg (optional)
+    - USD
+    - Texture
+
 """
 from typing import *
 from typing import List
+
+import PIL
+from abc import ABC, abstractmethod
 
 from assets.asset import Asset
 
@@ -46,6 +54,56 @@ log.debug("reviewable.py loaded")
 
 
 class Reviewable(asset.Asset):
+    """
+    Generic class for a reviewable. Stores the all elements of a reviewable.
+    """
+    def __init__(self, reviewable_name: str, reviewable_directory: 'system.Directory'):
+        super().__init__(reviewable_name)
+        self.reviewable_directory = reviewable_directory
+        self.asset_type = asset.AssetType.IMAGE_SEQUENCE
+
+    @abstractmethod
+    def get_filepath(self) -> Union['system.Filepath', 'system.Directory']:
+        """
+        Gets the filepath of the asset.
+        :return: Filepath of the asset.
+        """
+        pass
+
+    @classmethod
+    def from_dict(cls, asset_dict: Dict[Any, Any]) -> Union[None, Any]:
+        """
+        Converts a dictionary to an asset.
+        :param asset_dict: Dictionary to convert.
+        :return: None
+        """
+        reviewable_directory = system.Filepath(asset_dict['reviewable_directory'])
+        reviewable_name = asset_dict['reviewable_name']
+        return cls(reviewable_name, reviewable_directory)
+
+    @abstractmethod
+    def to_dict(self) -> Dict[str, Any]:
+        pass
+
+    @abstractmethod
+    def get_thumbnail_image(self) -> Optional[system.Filepath]:
+        """
+        Recursively search a directory for images
+        :return: Path to the first image found in the reviewable.
+        """
+        pass
+
+    @abstractmethod
+    def generate_thumbnail(self, thumbnail_path: 'system.Filepath') -> system.Filepath:
+        """
+        Generates a thumbnail for the reviewable.
+        :param thumbnail_path: Path to save the thumbnail to.
+        :return: True if the thumbnail was generated successfully, False otherwise.
+        """
+        pass
+
+
+class SequenceReviewable(Reviewable):
     """
     Class for a reviewable. Stores the all elements of a reviewable.
     """
@@ -72,9 +130,11 @@ class Reviewable(asset.Asset):
         :param asset_dict: Dictionary to convert.
         :return: None
         """
-        reviewable_directory = system.Filepath(asset_dict['reviewable_directory'])
-        reviewable_name = asset_dict['reviewable_name']
-        return cls(reviewable_name, reviewable_directory)
+        # reviewable_directory = system.Filepath(asset_dict['reviewable_directory'])
+        # reviewable_name = asset_dict['reviewable_name']
+        # return cls(reviewable_name, reviewable_directory)
+        # temporarily disabled - i dont think this is needed because we aren't saving reviewables to the database
+        pass
 
     def to_dict(self) -> Dict[str, Any]:
         pass
@@ -109,14 +169,22 @@ class Reviewable(asset.Asset):
         Recursively search a directory for images
         :return: Path to the first image found in the reviewable.
         """
+        from PIL import Image
         reviewable_thumbnail_path = self.reviewable_directory.system_path() + '/thumbnail.jpg'
         if os.path.exists(reviewable_thumbnail_path):
             return system.Filepath(reviewable_thumbnail_path)
+        log.debug(f"Couldn't find pre-made thumbnail.. Generating thumbnail for {self.reviewable_directory}")
         image_extensions = (".png", ".jpg")
         for root, dirs, files in os.walk(self.reviewable_directory.system_path()):
             for file in files:
                 if file.lower().endswith(image_extensions):
                     image_file = os.path.join(root, file)
+                    try:
+                        im = Image.open(system.Filepath(image_file).system_path())
+                    except PIL.UnidentifiedImageError:
+                        log.debug(f"Could not open {image_file}")
+                        continue
+
                     self.generate_thumbnail(system.Filepath(image_file))
                     return system.Filepath(image_file)
         return None
@@ -134,8 +202,9 @@ class Reviewable(asset.Asset):
         :param thumbnail_path: Path to save the thumbnail to.
         :return: True if the thumbnail was generated successfully, False otherwise.
         """
-        from PIL import Image  # type: ignore
+        from PIL import Image, ImageFile  # type: ignore
         reviewable_thumbnail_path = self.reviewable_directory.system_path() + '/thumbnail.jpg'
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
         im = Image.open(thumbnail_path.system_path())
         rgb_im = im.convert('RGB')
         rgb_im.thumbnail((200, 200))
@@ -155,3 +224,62 @@ def reviewables_from_directory(directory: 'system.Directory') -> List['Reviewabl
         reviewable = Reviewable(basename, subdirectory)
         reviewables.append(reviewable)
     return reviewables
+
+
+class UsdReviewable(Reviewable):
+    """
+    Class for a Usd reviewable. Stores the all elements of a reviewable.
+    """
+    def __init__(self, reviewable_name: str, reviewable_directory: 'system.Directory', usd_asset: 'asset.Asset'):
+        super().__init__(reviewable_name, reviewable_directory)
+        self.reviewable_directory = reviewable_directory
+        self.asset_type = asset.AssetType.USD
+        self.usd_asset = usd_asset
+
+    def __repr__(self) -> str:
+        return f"USD Reviewable <{self.asset_name}> from " \
+               f"<{self.reviewable_directory}>"
+
+    def get_filepath(self) -> Union['system.Filepath', 'system.Directory']:
+        """
+        Gets the filepath of the asset.
+        :return: Filepath of the asset.
+        """
+        usd_asset = self.usd_asset
+        filepath = usd_asset.get_filepath().system_path()
+        return filepath
+
+    @classmethod
+    def from_dict(cls, asset_dict: Dict[Any, Any]) -> Union[None, Any]:
+        """
+        Converts a dictionary to an asset.
+        :param asset_dict: Dictionary to convert.
+        :return: None
+        """
+        pass
+
+    def to_dict(self) -> Dict[str, Any]:
+        pass
+
+    def get_thumbnail_image(self) -> Optional[system.Filepath]:
+        """
+        Recursively search a directory for images
+        :return: Path to the first image found in the reviewable.
+        """
+        directory = self.reviewable_directory
+        image_extensions = (".png", ".jpg")
+        for root, dirs, files in os.walk(directory.system_path()):
+            for file in files:
+                if 'thumbnail' in file.lower():
+                    if file.lower().endswith(image_extensions):
+                        image_file = os.path.join(root, file)
+                        return system.Filepath(image_file)
+        return None
+
+    def generate_thumbnail(self, thumbnail_path: 'system.Filepath') -> system.Filepath:
+        """
+        Generates a thumbnail for the reviewable.
+        :param thumbnail_path: Path to save the thumbnail to.
+        :return: True if the thumbnail was generated successfully, False otherwise.
+        """
+        pass

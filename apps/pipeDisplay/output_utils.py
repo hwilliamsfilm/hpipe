@@ -1,16 +1,20 @@
 from collections import OrderedDict
 from core import data_manager, project, shot
 import sys
-if sys.version_info <= (3, 8):
+try:
+    import hou
     from PySide2 import QtWidgets, QtGui
-else:
+except Exception as e:
+    print(f'hou not found, not running in houdini: {e}')
     from PySide6 import QtWidgets, QtGui
+
 from core.hutils import logger
 from enum import Enum
 from core.hutils import system
 from core import data_manager
 from typing import *
 from assets import reviewable
+from core import assetEntry
 
 log = logger.setup_logger()
 log.debug("manager_utils.py loaded")
@@ -25,7 +29,8 @@ class Constants:
         "Plate": system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\plate"),
         "Workarea": system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\output\_workarea"),
         "Renders": system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\output\render"),
-        "Ref": system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\ref")
+        "Ref": system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\ref"),
+        "Assets": system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\ref"),
     }
     SHOWS = data_manager.ProjectDataManager().get_project_names()
     START_PROJECT = "defaults"
@@ -45,7 +50,7 @@ def shots_from_show(show: str, database: Optional[data_manager.ProjectDataManage
     return shots
 
 
-def get_reviewables(shot_list: Optional[List[shot.Shot]], type: str) -> Optional[List[reviewable.Reviewable]]:
+def get_reviewables(shot_list: Optional[List[shot.Shot]], type: str, filter: str) -> Optional[List[reviewable.Reviewable]]:
     """
     Get a list of output directories for a given project, shot and type.
     :param shot: List[shot.Shot]
@@ -56,13 +61,28 @@ def get_reviewables(shot_list: Optional[List[shot.Shot]], type: str) -> Optional
     if not shot_list:
         return None
 
+    asset_db = data_manager.AssetDataManager()
+
     reviewables = []
     for shot in shot_list:
         if type == 'Comp':
             reviewables += shot.get_comps()
         elif type == 'Plate':
-            reviewables += shot.get_plates()
+            plates = shot.get_plates()
+            for plate in plates:
+                name = plate.asset_name
+                log.debug(f"Plate name: {name}")
+                if 'ref' in name.lower():
+                    reviewables.append(plate)
+        elif type == 'Assets':
+            reviewables += assetEntry.reviewable_factory(asset_db.get_assets())
 
+    filtered_reviewables = []
+    if filter and filter != '':
+        for reviewable in reviewables:
+            if filter in reviewable.asset_name.lower():
+                filtered_reviewables.append(reviewable)
+        return filtered_reviewables
     return reviewables
 
 

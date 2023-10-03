@@ -3,16 +3,17 @@ Pipe Manager GUI for viewing outputs, comps, and renders.
 """
 
 import sys
-if sys.version_info <= (3, 8):
+
+try:
+    import hou
     from PySide2 import QtWidgets, QtCore, QtGui
-    from typing_extensions import TypedDict, Literal, overload
-else:
+except Exception as e:
+    print(f'hou not found, not running in houdini: {e}')
     from PySide6 import QtWidgets, QtCore, QtGui
+
 
 import core.project
 from core import data_manager, project, shot
-from apps.pipeManager import pipe_widgets
-from apps.pipeManager import manager_utils
 from core.hutils import logger
 from typing import *
 
@@ -38,6 +39,9 @@ class FlowLayout(QtWidgets.QLayout):
             self.setContentsMargins(margin, margin, margin, margin)
         self.setSpacing(spacing)
         self.itemList = []
+
+        # double click event
+        # self.double_click = QtCore.Signal(int)
 
     def __del__(self):
         """

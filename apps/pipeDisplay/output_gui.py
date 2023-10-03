@@ -3,10 +3,11 @@ Pipe Manager GUI for viewing outputs, comps, and renders.
 """
 
 import sys
-if sys.version_info <= (3, 8):
-    from PySide2 import QtWidgets, QtCore, QtGui  # type: ignore
-    from typing_extensions import TypedDict, Literal, overload
-else:
+try:
+    import hou
+    from PySide2 import QtWidgets, QtCore, QtGui
+except Exception as e:
+    print(f'hou not found, not running in houdini: {e}')
     from PySide6 import QtWidgets, QtCore, QtGui
 
 from core import data_manager, project, shot
@@ -47,6 +48,8 @@ class ThumbnailLoader(QtCore.QThread):
                 thumbnail = QtGui.QPixmap(output_utils.Constants.TEMP_IMAGE.system_path())
             if self._running:
                 self.thumbnail_loaded.emit(thumbnail, index)
+
+            # sleep for a bit so we don't overload the main thread sending signals back
             time.sleep(0.001)
 
     def stop(self):
@@ -55,13 +58,24 @@ class ThumbnailLoader(QtCore.QThread):
         self.wait()
 
 
-class OutputViewer(QtWidgets.QWidget):
+class OutputViewer(QtWidgets.QDialog):
     """
     Project Overview Panel where I can see and edit all projects and shots. This is a project management tool
     and not a viewer.
     """
-    def __init__(self, parent=None, font_scale: float = 1.0, start_project: str = output_utils.Constants.START_PROJECT):
+    def __init__(self, parent=None,
+                 font_scale: float = 1.0,
+                 start_project: str = output_utils.Constants.START_PROJECT,
+                 show_side_bar: bool = True,
+                 start_type="Assets",
+                 position: tuple = None,
+                 size: tuple = None,
+                 icon_size: int = None):
         super(OutputViewer, self).__init__(parent)
+
+        self.return_value = {}
+
+        self.isDialog = abs(show_side_bar-1)
 
         small_font = int(15 * font_scale)
         large_font = int(40 * font_scale)
@@ -136,7 +150,9 @@ class OutputViewer(QtWidgets.QWidget):
         self.size_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)  # type: ignore
         self.size_slider.setMinimum(50)
         self.size_slider.setMaximum(400)
-        self.size_slider.setValue(200)
+        if not icon_size:
+            icon_size = 100
+        self.size_slider.setValue(icon_size)
         self.size_slider.setTickInterval(10)
         self.size_slider.setTickPosition(QtWidgets.QSlider.TicksBelow)  # type: ignore
 
@@ -148,10 +164,10 @@ class OutputViewer(QtWidgets.QWidget):
 
         button_layout = QtWidgets.QVBoxLayout()
         button_layout.setAlignment(QtCore.Qt.AlignTop)  # type: ignore
-        button_layout.addWidget(self.filter)
-        button_layout.addWidget(output_widgets.QHLine())  # type: ignore
-        button_layout.addWidget(self.icon_view)
-        button_layout.addWidget(output_widgets.QHLine())  # type: ignore
+        # button_layout.addWidget(self.filter)
+        # button_layout.addWidget(output_widgets.QHLine())  # type: ignore
+        # button_layout.addWidget(self.icon_view)
+        # button_layout.addWidget(output_widgets.QHLine())  # type: ignore
         button_layout.addWidget(self.directory_type)
         button_layout.addWidget(output_widgets.QHLine())  # type: ignore
         button_layout.addWidget(self.show_selection)
@@ -161,7 +177,12 @@ class OutputViewer(QtWidgets.QWidget):
         button_layout.addWidget(self.latest_version)
         button_layout.addWidget(output_widgets.QHLine())  # type: ignore
         button_layout.addWidget(self.size_slider)
-        button_layout.addWidget(self.loading_bar)
+        # button_layout.addWidget(self.loading_bar)
+
+        self.bottom_bar = QtWidgets.QHBoxLayout()
+        self.bottom_bar.addWidget(self.icon_view)
+        self.bottom_bar.addWidget(self.filter)
+        self.bottom_bar.addWidget(self.loading_bar)
 
         button_layout.setAlignment(self.loading_bar, QtCore.Qt.AlignBottom)  # type: ignore
 
@@ -181,11 +202,23 @@ class OutputViewer(QtWidgets.QWidget):
         self.stackedLayout.addWidget(self.list_layout)
 
         self.body_layout.addLayout(self.stackedLayout)
-        self.body_layout.addWidget(self.side_bar_scroll)
+
+        if show_side_bar:
+            self.body_layout.addWidget(self.side_bar_scroll)
+
         self.main_layout.addLayout(self.title_layout)
         self.main_layout.addLayout(self.body_layout)
+        self.main_layout.addLayout(self.bottom_bar)
+
         self.setLayout(self.main_layout)
-        self.resize(1000, 800)
+        if not size:
+            size = (1000, 800)
+
+        self.resize(size[0], size[1])
+
+        if position:
+            self.move(position[0], position[1])
+
         self.body_layout.setStretch(0, 1)
         self.body_layout.setStretch(1, 0)
         self.setStyleSheet("background-color: #2d2d2d; color: #ffffff;")
@@ -204,9 +237,10 @@ class OutputViewer(QtWidgets.QWidget):
         # defaults
         self.show_selection.setCurrentText(start_project)
         log.debug("Setting show to: {}".format(start_project))
-        self.directory_type.setCurrentText("Comp")
+        self.directory_type.setCurrentText(start_type)
         self.sequence_toggle.setChecked(True)
         self.icon_view.setChecked(True)
+        self.update_outputs()
 
         # Connections
         self.icon_view.toggled.connect(self.change_view)
@@ -215,6 +249,8 @@ class OutputViewer(QtWidgets.QWidget):
         self.shot_selection.currentIndexChanged.connect(lambda: self.update_combo("shot"))
         self.directory_type.currentIndexChanged.connect(lambda: self.update_combo("type"))
         self.sequence_toggle.toggled.connect(self.update_outputs)
+        self.filter.returnPressed.connect(self.update_outputs)
+        self.size_slider.valueChanged.connect(self.update_outputs)
 
     def update_shots(self) -> bool:
         """
@@ -267,7 +303,8 @@ class OutputViewer(QtWidgets.QWidget):
         self.clear_list_layout()
 
         output_reviewables = output_utils.get_reviewables(self.current_shots(),
-                                                          self.directory_type.currentText())
+                                                          self.directory_type.currentText(),
+                                                          self.filter.text())
         log.debug("Updating outputs: {}".format(output_reviewables))
         self.update_flow_layout(output_reviewables)
         self.update_list_layout(output_reviewables)
@@ -346,6 +383,8 @@ class OutputViewer(QtWidgets.QWidget):
             button.setFont(font)
             button.setFixedSize(size, size)
             buttons.append(button)
+            if not self.isDialog:
+                button.clicked.connect(self.exit)
 
         for button in buttons:
             self.flow_layout.addWidget(button)
@@ -385,3 +424,15 @@ class OutputViewer(QtWidgets.QWidget):
             return True
         except AttributeError:
             pass
+
+    def exit(self) -> str:
+        """
+        Close the window and stop the thread. Return the current item filepath.
+        """
+        selected_item = self.sender()
+        self.loader_thread.stop()
+        log.debug(f"Selected item: {selected_item.text}")
+        if selected_item:
+            log.debug(selected_item.text())
+            self.return_value['filepath'] = selected_item.text()
+            self.accept()

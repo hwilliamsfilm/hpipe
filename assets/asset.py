@@ -60,3 +60,39 @@ class Asset(ABC):
         :return: None
         """
         pass
+
+
+class NullAsset(Asset):
+    """
+    Null asset class. This class is meant to be used as a placeholder for when an asset is not found.
+    """
+    def __init__(self, asset_name: str = 'NULL'):
+        super().__init__('NULL')
+        self.asset_type = AssetType.OTHER
+
+    def get_filepath(self) -> Union['system.Filepath', 'system.Directory']:
+        """
+        Gets the filepath of the asset.
+        :return: Filepath of the asset.
+        """
+        return system.Directory(r'Y:/_global_assets/assets')
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Converts the asset to a dictionary.
+        :return: Dictionary representation of the asset.
+        """
+        return {
+            'asset_name': 'NULL',
+            'asset_type': 'OTHER',
+            'asset_filepath': 'NULL',
+            'description': 'NULL'
+        }
+
+    def from_dict(self, asset_dict: Dict[Any, Any]) -> Union[None, Any]:
+        """
+        Converts a dictionary to an asset.
+        :param asset_dict: Dictionary to convert.
+        :return: None
+        """
+        return NullAsset()
