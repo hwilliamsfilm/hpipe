@@ -75,7 +75,9 @@ class OutputViewer(QtWidgets.QDialog):
 
         self.return_value = {}
 
-        self.isDialog = abs(show_side_bar-1)
+        self.isDialog = True
+        if show_side_bar:
+            self.isDialog = False
 
         small_font = int(15 * font_scale)
         large_font = int(40 * font_scale)
@@ -383,7 +385,7 @@ class OutputViewer(QtWidgets.QDialog):
             button.setFont(font)
             button.setFixedSize(size, size)
             buttons.append(button)
-            if not self.isDialog:
+            if self.isDialog:
                 button.clicked.connect(self.exit)
 
         for button in buttons:

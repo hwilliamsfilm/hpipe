@@ -56,6 +56,7 @@ SHOT_STRUCTURE = {
             "cache": '',
             "render": '',
             "comp": '',
+            "usd": '',
         },
         "working_files": {
             "houdini": '',
@@ -90,9 +91,11 @@ COMP_FOLDER = 'comp'
 RENDER_FOLDER = 'render'
 CACHE_FOLDER = 'cache'
 NUKE_FOLDER = 'nuke'
+USD_FOLDER = 'usd'
 WORKING_FOLDER = 'working_files'
 HOUDINI_FOLDER = 'houdini'
 PROJECTS_DIR_NAME = 'projects'
+USD_FILE_NAME = 'shot.usda'
 
 
 # Default values for a new project. These are used when creating a new project to populate the project's database
@@ -156,4 +159,10 @@ USD_HIERARCHY = {
         'misc': {},
     }
 }
+
+SHOT_USD_LAYERS = ['layout',
+                   'anim',
+                   'fx',
+                   'light',
+                   'render']
 

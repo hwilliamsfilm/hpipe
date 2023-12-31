@@ -83,7 +83,6 @@ class UsdAssetManager:
         if not asset_name:
             self.asset_name = os.path.basename(self.usd_filepath).split('.')[0].lower()
         self.validate_path()
-        # self.validate_thumbnail()
         self.check_duplicate()
         self.asset_instance = self.create_asset_instance()
         self.asset_entry = self.create_asset_entry()
