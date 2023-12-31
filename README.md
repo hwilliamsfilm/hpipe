@@ -5,6 +5,16 @@ hPipe is a collection of tools focused around a small portable USD VFX pipeline.
 
 The package depends on two databases: a **project database** that manages active projects, and an **asset database** that can store different asset types: Image Sequences, USD components, ProjectFiles, and Reviewables.
 
+# Package Features:
+
+- Output and Asset Browser that cuts out needless effort finding reviewables
+- Conversion tools built-in that focus on convenience
+- Project database that can store useful information about projects and shots
+- Asset database that can be used to store all kinds of assets for use in different DCCs
+- A basic USD core for building larger more complicated scenes
+- Everything simplified for ease of updating 
+- Free and open source
+
 
 ## Authors
 

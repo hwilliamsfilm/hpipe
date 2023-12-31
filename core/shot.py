@@ -179,6 +179,22 @@ class Shot:
         houdini_files = projectFile.project_files_from_directory(houdini_path)
         return nuke_files + houdini_files
 
+    def get_usd_path(self) -> system.Filepath:
+        """
+        Returns the USD file path
+        :return:
+        """
+        usd_file = system.Filepath(f"{self.get_shot_path()}/{constants.USD_FILE_NAME}")
+        return usd_file
+
+    def get_usd_directory(self) -> system.Directory:
+        """
+        Returns the USD file path
+        :return:
+        """
+        usd_dir = f"{self.get_shot_path()}/output/{constants.USD_FOLDER}"
+        return system.Directory(usd_dir)
+
     def get_renders(self) -> List[str]:
         """
         Returns the renders contained in the render folder.

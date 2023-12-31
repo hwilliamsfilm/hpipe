@@ -8,8 +8,8 @@ import json
 import os
 from typing import *
 
-from core import constants, project, shot
-from core.hutils import logger
+from core import constants, project, shot, assetEntry
+from core.hutils import logger, system
 from assets import asset, usdAsset, reviewable, projectFile, imageSequence
 
 log = logger.setup_logger()
@@ -22,8 +22,10 @@ class JsonDataAccessor:
     Project's database via json.
     """
 
-    def __init__(self, db_path):
-        self.db_path = db_path
+    def __init__(self, db_path, create_if_missing: bool = True, default_data: Any = None):
+        self.db_path = system.Filepath(db_path).system_path()
+        self.default_data = default_data
+        self.create_if_missing = create_if_missing
         self.data = self.get_data()
 
     def get_data(self) -> dict:
@@ -33,10 +35,18 @@ class JsonDataAccessor:
         """
         if not os.path.exists(self.db_path):
             log.error(f"Database file does not exist: {self.db_path}")
+            if self.create_if_missing:
+                json_filepath = system.Filepath(self.db_path).system_path()
+                if not os.path.exists(os.path.dirname(json_filepath)):
+                    os.makedirs(os.path.dirname(json_filepath), exist_ok=True)
+                with open(json_filepath, 'w') as fileName:
+                    if not self.default_data:
+                        self.default_data = {}
+                    json.dump(self.default_data, fileName, indent=4)
+                    log.warning(f"Created database file: {self.db_path}")
             return {}
         with open(self.db_path, 'r') as fileName:
             self.data = json.load(fileName)
-
         return self.data
 
     def save_data(self, data: dict) -> bool:
@@ -59,6 +69,97 @@ class JsonDataAccessor:
         raise NotImplementedError("Backup not implemented yet")
 
 
+class ConfigDataManager:
+    """
+    Config data manager. This is used as the primary interface for the configuration of the pipeline. Replaces the
+    constants module by storing everything to a json file in the home directory.
+    """
+    def __init__(self):
+        self.default_dict = {
+            "PROJECTS_ROOT": 'Y:/projects/',
+            "ASSETS_ROOT": 'Y:/_global_assets/assets/',
+            "RECYCLE_BIN": 'Y:/projects/_recycle_bin/',
+            "SLATE_PATH": 'Y:/_global_assets/slate/slate_A01.png',
+            "DB_PATH": 'Y:/project_db/projects_refactor.json',
+            "ARCHIVE_DB_PATH": '/Users/hunterwilliams/Documents/project_db/projects_archive.json',
+            "DB_BACKUP": 'Y:/vault/db_backup/',
+            "DB_TYPE": 'json',
+            "GLOBAL_ASSETS": 'Y:/_global_assets/',
+            "ASSET_DB_PATH": 'Y:/project_db/assets.json',
+        }
+        self.accessor = JsonDataAccessor(constants.CONFIG_PATH,
+                                         create_if_missing=True,
+                                         default_data=self.default_dict)
+        self.data = self.accessor.data
+
+    def __repr__(self) -> str:
+        return f" Config Manager @ {self.accessor.db_path}"
+
+    def backup(self) -> bool:
+        """
+        Backs up the database to json. This is the primary method for backing up the database. If it's mongodb, it will
+        be backed up to json. If it's json, it will be backed up to json.
+        """
+        return self.accessor.backup(increment=True)
+
+    def save(self) -> bool:
+        """
+        Saves the current state of our data to the database via the specific implementation of the DataAccessor.
+        :return: True if successful
+        """
+        return self.accessor.save_data(self.data)
+
+    def get_config(self, config_name) -> str:
+        """
+        Gets the database data and returns it as a dictionary.
+        :param str config_name: name of config to get
+        :return: dictionary of database data
+        """
+        if config_name not in self.data.keys():
+            raise ValueError(f"Config {config_name} does not exist in config file: {self.accessor.db_path}")
+
+        return self.data[config_name]
+
+    def get_config_filepath(self, config_name) -> system.Filepath:
+        """
+        Gets the database data and returns it as a dictionary.
+        :param str config_name: name of config to get
+        :return: dictionary of database data
+        """
+        if config_name not in self.data.keys():
+            raise ValueError(f"Config {config_name} does not exist in config file: {self.accessor.db_path}")
+
+        return system.Filepath(self.data[config_name])
+
+    def get_config_directory(self, config_name) -> system.Directory:
+        """
+        Gets the database data and returns it as a dictionary.
+        :param str config_name: name of config to get
+        :return: dictionary of database data
+        """
+        if config_name not in self.data.keys():
+            raise ValueError(f"Config {config_name} does not exist in config file: {self.accessor.db_path}")
+
+        return system.Directory(self.data[config_name])
+
+    def set_config(self, config_name: str, data: str) -> bool:
+        """
+        Saves the database data to disk.
+        :param str config_name: name of config to set
+        :param dict data: dictionary of database data
+        :return: True if successful
+        """
+        self.data[config_name] = data
+        return self.save()
+
+    def get_all_config(self) -> dict:
+        """
+        Gets the database data and returns it as a dictionary.
+        :return: dictionary of database data
+        """
+        return self.data
+
+
 class ProjectDataManager:
     """
     Projects data manager. This is used as the primary interface for the Project's database. Uses the
@@ -66,9 +167,9 @@ class ProjectDataManager:
     """
 
     def __init__(self):
-        self.accessor = JsonDataAccessor(constants.DB_PATH)
+        self.accessor = JsonDataAccessor(ConfigDataManager().get_config_filepath('DB_PATH').system_path())
         self.data = self.accessor.data
-        self.archive_accessor = JsonDataAccessor(constants.ARCHIVE_DB_PATH)
+        self.archive_accessor = JsonDataAccessor(ConfigDataManager().get_config_filepath('ARCHIVE_DB_PATH').system_path())
 
     def __repr__(self) -> str:
         return f" Project Manager @ {self.accessor.db_path}"
@@ -159,6 +260,33 @@ class ProjectDataManager:
         self.data[project_instance.name] = project_instance.to_dict()
 
         ProjectDirectoryGenerator(project_instance, push_directories=True)
+
+        if push:
+            return self.save()
+
+        return True
+
+    def add_shot(self, project_instance: project.Project, shot_instance: shot.Shot, push: bool = True) -> bool:
+        """
+        Adds a shot to the database given a project instance and a shot instance. This is the primary method for adding
+        a shot.
+        """
+        if not self.is_project(project_instance.name):
+            log.warning(f"Project {project_instance.name} does not exist in database at path {self.accessor.db_path}")
+            return False
+
+        if shot_instance.name in [s.name for s in project_instance.get_shots()]:
+            log.warning(f"Shot {shot_instance.name} already exists in project {project_instance.name} in database at "
+                        f"path {self.accessor.db_path}")
+            return False
+
+        log.info(f"Adding shot {shot_instance.name} to project {project_instance.name} in database at "
+                 f"path {self.accessor.db_path}")
+
+        project_instance.add_shot(shot_instance)
+        self.update_project(project_instance, push=False)
+
+        ProjectDirectoryGenerator(project_instance, shot_instance, push_directories=True)
 
         if push:
             return self.save()
@@ -420,24 +548,80 @@ class AssetDataManager:
     AbstractDataAccessor interface to access the database directly.
     """
     def __init__(self):
-        self.accessor = JsonDataAccessor(constants.ASSET_DB_PATH)
+        self.accessor = JsonDataAccessor(ConfigDataManager().get_config_filepath('ASSET_DB_PATH').system_path())
         self.data = self.accessor.data
         # self.archive_accessor = JsonDataAccessor(constants.ARCHIVE_ASSET_PATH)
 
     def __repr__(self) -> str:
         return f" Asset Data Manager @ {self.accessor.db_path}"
 
-    def add_asset(self, asset_instance: asset.Asset) -> bool:
+    def add_asset(self, assetEntry: assetEntry.AssetEntry) -> bool:
         """
         Adds an asset to the database.
         :param asset_instance: asset instance to add
         :return: True if successful
         """
-        if asset_instance.asset_name in self.data.keys():
-            raise ValueError(f"Asset {asset_instance.name} already exists in database at path {self.accessor.db_path}")
 
-        self.data[asset_instance.name] = asset_instance.to_dict()
+        if assetEntry.asset_instance.asset_name in self.data.keys():
+            raise ValueError(f"Asset {assetEntry.asset_instance.asset_name} already exists in database at path {self.accessor.db_path}")
+
+        self.data[assetEntry.asset_instance.asset_name] = assetEntry.to_dict()
         self.save()
+        return True
+
+    def get_assets(self) -> List[assetEntry.AssetEntry]:
+        """
+        Builds a list of AssetEntry objects from the current data.
+        :returns: list of AssetEntry objects
+        """
+        asset_list = []
+        asset_count = len(self.data.items())
+        if asset_count == 0:
+            log.warning(f"No assets found in database at path {self.accessor.db_path}")
+            return []
+
+        log.debug(f"Found Assets: {self.data}")
+        for key, val in self.data.items():
+            asset_list.append(assetEntry.AssetEntry.from_dict(val))
+
+        return asset_list
+
+    def get_asset(self, asset_name: str) -> Union[None, 'asset.Asset']:
+        """
+        Builds an asset.Asset object from the current data given an asset name.
+        """
+        for assetEntry in self.get_assets():
+            if assetEntry.asset_instance.asset_name == asset_name:
+                return assetEntry.asset_instance
+        return None
+
+    def save(self) -> bool:
+        """
+        Saves the current state of our data to the database via the specific implementation of the DataAccessor.
+        :return: True if successful
+        """
+        for asset_instance in self.get_assets():
+            self.update_asset(asset_instance, push=False)
+
+        return self.accessor.save_data(self.data)
+
+    def update_asset(self, asset_to_update: assetEntry.AssetEntry, push: bool = True) -> bool:
+        """
+        Updates an asset in the database given a asset instance. This is the primary method for updating an asset.
+        :param assetEntry.AssetEntry asset_to_update: asset instance to be updated in the database
+        :param bool push: if True, pushes the updated project back to the database
+        """
+        asset_name = asset_to_update.asset_instance.asset_name
+
+        if asset_name not in self.data.keys():
+            log.warning(f"Project {asset_name} not found in database at path {self.accessor.db_path}")
+            return False
+
+        self.data[asset_name] = asset_to_update.to_dict()
+
+        if push:
+            return self.save()
+
         return True
 
 
@@ -457,7 +641,7 @@ class AssetDirectoryGenerator:
         Generates the directories for an asset instance.
         :return: True if successful
         """
-        root_constant = constants.ASSETS_ROOT
+        root_constant = ConfigDataManager().get_config_directory('ASSETS_ROOT').system_path()
 
         asset_path = f'{root_constant}/{self.asset_name}'
         self.asset_structure[asset_path] = self.asset_structure.pop("name")
@@ -471,7 +655,6 @@ class AssetDirectoryGenerator:
         _generate_directories(self.asset_structure)
 
         return True
-
 
 
 def _generate_directories(folder_dictionary) -> bool:

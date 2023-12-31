@@ -24,7 +24,9 @@ class SceneControlConstants(Enum):
         'SAVE_PATH',
         'OUTPUT_PATH',
         'CACHE_PATH',
-        'RENDER_PATH'
+        'RENDER_PATH',
+        'TASK',
+        'DESCRIPTION'
     ]
 
     project_global_vars: List[str] = [
@@ -180,6 +182,13 @@ def set_shot(kwargs) -> bool:
     """
     node = kwargs['node']
     shot_name = node.evalParm('shot')
+    task = node.evalParm('task')
+    description = node.evalParm('description')
+    if task == '-' or task == '':
+        task = 'Dev'
+
+    if description == '-' or description == '':
+        description = 'Default'
 
     no_shot = shot_name == '-' or shot_name == ''
     if no_shot:
@@ -204,8 +213,51 @@ def set_shot(kwargs) -> bool:
     set_global('FSTART', str(shot.frame_start))
     set_global('FEND', str(shot.frame_end))
 
+
     hou.playbar.setFrameRange(float(shot.frame_start), float(shot.frame_end))
     hou.playbar.setPlaybackRange(float(shot.frame_start), float(shot.frame_end))
+
+    node.cook(True)
+    return True
+
+
+def set_task(kwargs):
+    """
+    Set the task based on the selected task in the scene control node.
+    :param kwargs: The kwargs from the houdini event handler.
+    :return: True if successful.
+    """
+    node = kwargs['node']
+    shot_name = node.evalParm('shot')
+    task = node.evalParm('task')
+    description = node.evalParm('description')
+    if task == '-' or task == '':
+        task = 'Dev'
+
+    if description == '-' or description == '':
+        description = 'Default'
+
+    no_shot = shot_name == '-' or shot_name == ''
+    if no_shot:
+        unset_globals('shot')
+        node.cook(True)
+        return False
+
+    database = data_manager.ProjectDataManager()
+
+    project_name = hou.getenv('PROJECT')
+    project = database.get_project(project_name)
+
+    shot = project.get_shot(shot_name)
+
+    if not shot:
+        return False
+    if not project:
+        return False
+
+    # TODO: potentially this should be a for loop over the shot global vars enum
+    set_global('DESCRIPTION', description)
+    set_global('TASK', task)
 
     node.cook(True)
     return True

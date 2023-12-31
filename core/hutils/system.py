@@ -5,12 +5,14 @@ import os
 import platform
 from enum import Enum
 from typing import *
+import datetime
 
 from core.hutils import path
 
 LINUX_ROOT = r'/mnt/share/hlw01/'
 WINDOWS_ROOT = r'Y:/'
 OSX_ROOT = r'/Volumes/hlw01/'
+LOCAL_ROOT = os.path.expanduser('~')
 
 
 class System(Enum):
@@ -18,6 +20,7 @@ class System(Enum):
     WINDOWS = 'windows'
     LINUX = 'linux'
     RELATIVE = 'relative'
+    LOCAL = 'local'
 
 
 class Directory:
@@ -103,6 +106,7 @@ class Filepath:
 
     def __init__(self, filepath_path: str, filepath_name: str = ''):
         self.filepath_path = path.fix_path(filepath_path)
+        self.filepath_path = self.expand_path()
         if filepath_name == '':
             filepath_name = os.path.basename(filepath_path)
         self.filepath_name = filepath_name
@@ -158,7 +162,15 @@ class Filepath:
         if self.filepath_path == '.' or self.filepath_path == r'./':
             return System.RELATIVE
 
-        raise ValueError('Filepath does not contain a valid system root.')
+        raise ValueError(f'Filepath: {self.filepath_path} does not contain a valid system root.')
+
+    def expand_path(self) -> str:
+        """
+        Expands the path to the current system if there is a ~ in the path.
+        """
+        if '~' in self.filepath_path:
+            self.filepath_path = self.filepath_path.replace('~', SystemConfig.get_home())
+        return self.filepath_path
 
     def get_root(self) -> str:
         """
@@ -178,9 +190,12 @@ class Filepath:
         """
         Returns the path for the current system
         """
-        # remove the system root from the path
         sys_config = SystemConfig()
         environment = sys_config.system
+
+        if '~' in self.filepath_path:
+            self.filepath_path.replace('~', sys_config.get_home())
+
         if environment != self.system and self.system != System.RELATIVE:
             return self.filepath_path.replace(self.system_root, sys_config.system_root)
         else:
@@ -241,6 +256,13 @@ class SystemConfig:
         self.system_root = self.get_root()
 
     @staticmethod
+    def get_system_date() -> str:
+        """
+        Returns the current date in the format: YYYY_MM_DD
+        """
+        return datetime.datetime.now().strftime('%Y_%m_%d')
+
+    @staticmethod
     def get_system() -> System:
         """
         Returns the current system
@@ -266,3 +288,11 @@ class SystemConfig:
         if self.system == System.OSX:
             return OSX_ROOT
         raise ValueError('Filepath does not contain a valid system root.')
+
+    @staticmethod
+    def get_home() -> str:
+        """
+        Returns the home directory for the current system.
+        """
+        return os.path.expanduser('~')
+
