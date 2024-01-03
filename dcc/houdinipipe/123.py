@@ -100,11 +100,17 @@ def set_node_defaults() -> bool:
     object_merge_type = hou.nodeType(hou.sopNodeTypeCategory(), 'object_merge')
     object_merge_type.setDefaultColor(hou.Color(0, 0, 1))
 
-    # farm_rop_type = hou.nodeType(hou.ropNodeTypeCategory(), 'hunter_farm_rop')
-    # farm_rop_type.setDefaultColor(hou.Color(.384, .184, .329))
+    shot_loader_type = hou.nodeType(hou.lopNodeTypeCategory(), 'hunterwilliams::shot_loader::1.0')
+    shot_loader_type.setDefaultColor(hou.Color(.4, .4, .4))
 
-    # file_write_type = hou.nodeType(hou.sopNodeTypeCategory(), 'hunter::main::file_write::1.0')
-    # file_write_type.setDefaultColor(hou.Color(.384, .184, .329))
+    mute_layer_type = hou.nodeType(hou.lopNodeTypeCategory(), 'hunterwilliams::mute_layer::1.0')
+    mute_layer_type.setDefaultColor(hou.Color(.996, .682, .682))
+
+    write_layer_type = hou.nodeType(hou.lopNodeTypeCategory(), 'hunterwilliams::write_layer::1.0')
+    write_layer_type.setDefaultColor(hou.Color(.905, .788, .662))
+
+    configure_shot_layer_type = hou.nodeType(hou.lopNodeTypeCategory(), 'hunterwilliams::configure_shot_layer::1.0')
+    configure_shot_layer_type.setDefaultColor(hou.Color(.905, .788, .662))
 
     return True
 

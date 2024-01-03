@@ -11,6 +11,7 @@ from typing import *
 from core import constants, project, shot, assetEntry
 from core.hutils import logger, system
 from assets import asset, usdAsset, reviewable, projectFile, imageSequence
+from assets.husd import husd_util
 
 log = logger.setup_logger()
 log.debug("data_manager.py loaded")
@@ -212,7 +213,7 @@ class ProjectDataManager:
         param str project_name: name of project
         """
         for project_instance in self.get_projects():
-            if project_instance.name == project_name:
+            if project_instance.name.lower() == project_name.lower():
                 return project_instance
 
         raise ValueError(f"Project {project_name} not found in database at path {self.accessor.db_path}")
@@ -287,6 +288,8 @@ class ProjectDataManager:
         self.update_project(project_instance, push=False)
 
         ProjectDirectoryGenerator(project_instance, shot_instance, push_directories=True)
+        self.save()
+        husd_util.ShotUsd(project_instance.name, shot_instance.name)
 
         if push:
             return self.save()
