@@ -108,7 +108,7 @@ class SequenceReviewable(Reviewable):
     Class for a reviewable. Stores the all elements of a reviewable.
     """
     def __init__(self, reviewable_name: str, reviewable_directory: 'system.Directory'):
-        super().__init__(reviewable_name)
+        super().__init__(reviewable_name, reviewable_directory)
         self.reviewable_directory = reviewable_directory
         self.asset_type = asset.AssetType.IMAGE_SEQUENCE
 
@@ -221,7 +221,7 @@ def reviewables_from_directory(directory: 'system.Directory') -> List['Reviewabl
     reviewables = []
     for subdirectory in directory.get_children_directories():
         basename = os.path.basename(subdirectory.directory_path)
-        reviewable = Reviewable(basename, subdirectory)
+        reviewable = SequenceReviewable(basename, subdirectory)
         reviewables.append(reviewable)
     return reviewables
 
