@@ -7,10 +7,10 @@ import datetime
 import os
 from typing import *
 
-import core.constants as constants
 from core import shot
 from core.hutils import logger, manager_utils
 import sys
+from core.config_manager import ConfigDataManager
 
 if sys.version_info <= (3, 8):
     from typing_extensions import TypedDict, Literal, overload
@@ -45,6 +45,7 @@ class Project:
         """
         self.name = project_name
         self.description = description
+        self.config = ConfigDataManager()
 
         if not date_created:
             date_created = str(datetime.date.today())
@@ -82,14 +83,16 @@ class Project:
         Get file server path for project directory using constants
         :return: str path
         """
-        return f"{constants.PROJECTS_ROOT}/{self.year}/{self.name}"
+        project_root = self.config.get_config('PROJECTS_ROOT')
+        return f"{project_root}/{self.year}/{self.name}"
 
     def get_archive_path(self) -> str:
         """
         Get path for project directory using constants
         :return: str path
         """
-        return f"{constants.ARCHIVE_ROOT}/{self.year}/{self.name}"
+        archive_root = self.config.get_config('ARCHIVE_ROOT')
+        return f"{archive_root}/{self.year}/{self.name}"
 
     def get_assets_path(self) -> str:
         """

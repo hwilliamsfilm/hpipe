@@ -62,7 +62,7 @@ class UsdAssetBuilder:
         Registers the usd asset to the database.
         :return: True if successful.
         """
-        filepath= self.get_output_path()
+        filepath = self.get_output_path()
         asset_name = self.node_name
         return usdAsset.UsdAssetManager(usd_filepath=filepath, asset_name=asset_name).add_asset_entry()
 

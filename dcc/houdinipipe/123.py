@@ -14,11 +14,12 @@ class HoudiniPipe:
     Enum for the houdini pipe.
     """
     stable_pipe = [
-        r"/Users/hunterwilliams/PycharmProjects/hpipe",
+        r"Y:/hpipe/",
     ]
     stable_hda = [
         r'$HH/otls/',
-        r'/Users/hunterwilliams/PycharmProjects/hpipe/dcc/houdinipipe/hda/resource',
+        r'Y:/hpipe/dcc/houdinipipe/hda/resource',
+        r"Y:\_global_assets\project_hda",
     ]
 
     dev_pypanels = [r'/Volumes/hlw01/hpipe/hpipe/dcc/houdinipipe/hda/resource/pipeManager.pypanel']
@@ -100,16 +101,16 @@ def set_node_defaults() -> bool:
     object_merge_type = hou.nodeType(hou.sopNodeTypeCategory(), 'object_merge')
     object_merge_type.setDefaultColor(hou.Color(0, 0, 1))
 
-    shot_loader_type = hou.nodeType(hou.lopNodeTypeCategory(), 'hunterwilliams::shot_loader::1.0')
+    shot_loader_type = hou.nodeType(hou.lopNodeTypeCategory(), 'hpipe::shot_loader::1.0')
     shot_loader_type.setDefaultColor(hou.Color(.4, .4, .4))
 
-    mute_layer_type = hou.nodeType(hou.lopNodeTypeCategory(), 'hunterwilliams::mute_layer::1.0')
+    mute_layer_type = hou.nodeType(hou.lopNodeTypeCategory(), 'hpipe::mute_layer::1.0')
     mute_layer_type.setDefaultColor(hou.Color(.996, .682, .682))
 
-    write_layer_type = hou.nodeType(hou.lopNodeTypeCategory(), 'hunterwilliams::write_layer::1.0')
+    write_layer_type = hou.nodeType(hou.lopNodeTypeCategory(), 'hpipe::write_layer::1.0')
     write_layer_type.setDefaultColor(hou.Color(.905, .788, .662))
 
-    configure_shot_layer_type = hou.nodeType(hou.lopNodeTypeCategory(), 'hunterwilliams::configure_shot_layer::1.0')
+    configure_shot_layer_type = hou.nodeType(hou.lopNodeTypeCategory(), 'hpipe::configure_shot_layer::1.0')
     configure_shot_layer_type.setDefaultColor(hou.Color(.905, .788, .662))
 
     return True
@@ -119,58 +120,7 @@ def set_node_defaults() -> bool:
 print('Running houdini startup script...')
 extend_scripts()
 extend_hdas()
-# add_default_scene()
+add_default_scene()
 unique_scene_data()
 set_node_defaults()
 # install_pypanels() # TODO add pypanels to be installed
-
-
-
-"""
-#
-# Houdini Environment Settings
-#
-# The contents of this file are read into the environment
-# at startup.  They will override any existing entries in
-# the environment.
-#
-# The syntax is one entry per line as follows:
-#    VAR = VALUE
-#
-# Values may be quoted
-#    VAR = "VALUE"
-#
-# Values may be empty
-#    VAR =
-#
-
-# Example:
-#
-# HOUDINI_NO_SPLASH = 1
-
-
-# DEFAULTS
-
-
-HOUDINI_SPLASH_FILE = "/Volumes/hlw01/_houdini_\config\splash\splash_04.jpg"
-# OCIO = "/Volumes/hlw01/_global_assets\aces\OpenColorIO-Configs-master\aces_1.0.3\config.ocio"
-
-# "Y:\hpipe\dcc\houdinipipe;&;"
-
-# HOUDINI_SCRIPT_PATH = "/Volumes/hlw01/hpipe/dcc/houdinipipe;&;"
-
-
-# Project Tools
-
-# PROJ_CONFIG = "/Volumes/hlw01/_houdini_/config/proj_list.json"
-# PROJ_ROOT = "/Volumes/hlw01/projects/"
-
-# ICON = "/Volumes/hlw01/_houdini_/icons"
-
-
-# HOUDINI_DSO_ERROR = 2
-# PATH = "C:/ProgramData/Redshift/bin;$PATH"
-# HOUDINI_PATH = "C:/ProgramData/Redshift/Plugins/Houdini/${HOUDINI_VERSION};&"
-
-"""
-

@@ -74,15 +74,18 @@ def get_reviewables(shot_list: Optional[List[shot.Shot]], type: str, filter: str
                 log.debug(f"Plate name: {name}")
                 if 'ref' in name.lower():
                     reviewables.append(plate)
-        elif type == 'Assets':
-            reviewables += assetEntry.reviewable_factory(asset_db.get_assets())
+    if type == 'Assets':
+        asset_reviewables = assetEntry.reviewable_factory(asset_db.get_assets())
+        reviewables += asset_reviewables
 
     filtered_reviewables = []
     if filter and filter != '':
         for reviewable in reviewables:
             if filter in reviewable.asset_name.lower():
                 filtered_reviewables.append(reviewable)
+        log.debug(f"Filtered reviewables: {filtered_reviewables}")
         return filtered_reviewables
+    log.debug(f"Reviewables: {reviewables}")
     return reviewables
 
 

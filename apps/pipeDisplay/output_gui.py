@@ -226,7 +226,7 @@ class OutputViewer(QtWidgets.QDialog):
         self.setStyleSheet("background-color: #2d2d2d; color: #ffffff;")
 
         # Watermark
-        self.watermark_label = QtWidgets.QLabel('www.huntervfx.com | 2023')
+        self.watermark_label = QtWidgets.QLabel('2024')
         self.watermark_label.setFont(self.watermark_font)
         self.watermark_label.setStyleSheet("color: rgb(200, 200, 200)")
         self.watermark_label.setAlignment(QtCore.Qt.AlignBottom | QtCore.Qt.AlignRight)

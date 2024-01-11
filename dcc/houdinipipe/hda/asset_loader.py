@@ -23,7 +23,7 @@ def browse_button(kwargs) -> bool:
     :return:
     """
     node = hou.pwd()
-    window = output_gui.OutputViewer(show_side_bar=False, size=(1000, 500), start_type='Assets', font_scale=.8)
+    window = output_gui.OutputViewer(show_side_bar=False, size=(1000, 500), start_type='Assets', font_scale=.8, icon_size=200)
     window.setParent(hou.qt.mainWindow(), QtCore.Qt.Window)
     if window.exec_():
         solution = window.return_value

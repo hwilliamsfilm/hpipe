@@ -49,6 +49,25 @@ class Directory:
 
         return directory_files
 
+    def get_files_by_extension(self, extension: str, recurse=True) -> List['Filepath']:
+        """
+        Returns a list of all files in the directory with the given extension.
+        """
+        directory_files: list[Filepath] = []
+
+        if recurse:
+            for root, dirs, files in os.walk(self.directory_path):
+                for file in files:
+                    if file.endswith(extension):
+                        directory_files.append(Filepath(os.path.join(root, file)))
+
+        else:
+            for file in os.listdir(self.directory_path):
+                if file.endswith(extension):
+                    directory_files.append(Filepath(os.path.join(self.directory_path, file)))
+
+        return directory_files
+
     def get_parent_directory(self) -> 'Directory':
         """
         Returns a new directory object representing the parent directory of this one if it exists.
@@ -147,9 +166,13 @@ class Filepath:
         """
         Returns the current system
         """
+
+        # TODO logic needs to be reworked
         if LINUX_ROOT in self.filepath_path:
             return System.LINUX
         if WINDOWS_ROOT in self.filepath_path:
+            return System.WINDOWS
+        if r"C:" in self.filepath_path:
             return System.WINDOWS
         if OSX_ROOT in self.filepath_path:
             return System.OSX
