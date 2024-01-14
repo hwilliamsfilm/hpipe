@@ -9,6 +9,8 @@ import datetime
 
 from core.hutils import path
 
+
+# user specific root directories
 LINUX_ROOT = r'/mnt/share/hlw01/'
 WINDOWS_ROOT = r'Y:/'
 OSX_ROOT = r'/Volumes/hlw01/'

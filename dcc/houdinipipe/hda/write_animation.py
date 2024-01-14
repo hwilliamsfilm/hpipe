@@ -19,11 +19,24 @@ def get_root_path() -> str:
     """
     shot = hou.getenv("SHOT")
     project = hou.getenv("PROJECT")
-    database = data_manager.ProjectDataManager()
-    project_instance = database.get_project(project)
-    shot_instance = project_instance.get_shot(shot)
-    descriptor = hou.pwd().parm('descriptor').eval()
-    root_path = f"{shot_instance.get_usd_directory().system_path()}/geometry/{descriptor}"
+    node = hou.pwd()
+    asset = node.parm('assetanimation').eval()
+    if asset == 1:
+        config_manager = data_manager.ConfigDataManager()
+        asset_root = config_manager.get_config("ASSETS_ROOT")
+        asset_name = node.parm('assetname').eval()
+        descriptor = hou.pwd().parm('descriptor').eval()
+        root_path = f"{asset_root}/{asset_name}/{descriptor}"
+        log.debug(f"Root path: {root_path}")
+
+    else:
+        database = data_manager.ProjectDataManager()
+        project_instance = database.get_project(project)
+        shot_instance = project_instance.get_shot(shot)
+        descriptor = hou.pwd().parm('descriptor').eval()
+        root_path = f"{shot_instance.get_usd_directory().system_path()}/geometry/{descriptor}"
+
+
     log.debug(f"Root path: {root_path}")
     root_filepath = system.Filepath(root_path)
     return root_filepath.system_path()
