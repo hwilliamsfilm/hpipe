@@ -51,7 +51,7 @@ class GenericProjectFile(asset.Asset):
         :return: Major and minor version of the asset.
         """
         filepath = self.filepath
-        version_string = filepath.system_path().split('.')[-2].split('_')[-1]
+        version_string = filepath.system_path().split('.')[-2].split('-')[-1]
         version_letter: str = version_string[0]
         version_number: int = int(version_string[1:])
         return version_letter, version_number
@@ -61,21 +61,24 @@ class GenericProjectFile(asset.Asset):
         Gets the name of the current asset.
         """
         filename = self.filepath.get_filename()
-        return filename.split('_')[1]
+        return filename.split('-')[1]
 
     def get_asset_description(self) -> str:
         """
         Gets the description of the current asset.
         """
         filename = self.filepath.get_filename()
-        return filename.split('_')[2]
+        # log.debug(f"Filename: {filename}")
+        if len(filename.split('-')) < 3:
+            return None
+        return filename.split('-')[2]
 
     def get_asset_shot(self) -> str:
         """
         Gets the shot of the current asset.
         """
         filename = self.filepath.get_filename()
-        return filename.split('_')[0]
+        return filename.split('-')[0]
 
     def get_asset_project(self) -> str:
         """

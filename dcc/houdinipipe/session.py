@@ -42,6 +42,7 @@ class HoudiniSession:
         :returns: The current latest version of the project file given the task and desc or None if the project file is not set.
         """
         if not self.projectFile:
+            log.debug("No project file set.")
             return None
 
         hip_directory = self.projectFile.filepath.get_parent_directory()
@@ -54,6 +55,8 @@ class HoudiniSession:
 
         matching_hipfiles = []
         for hip_file in hip_files:
+            log.debug(f"Hip file: {hip_file}")
+
             if hip_file.get_asset_description() == current_description and hip_file.get_asset_name() == current_task:
                 matching_hipfiles.append(hip_file)
 
@@ -78,6 +81,7 @@ class HoudiniSession:
         :returns: The name of the current asset (task) given the filename or None if the project file is not set.
         """
         if not self.projectFile:
+            log.debug("No project file set.")
             return None
         return self.projectFile.asset_name
 
@@ -113,7 +117,7 @@ class HoudiniSession:
         project_instance = self.database.get_project(project_name)
         project_path = project_instance.get_project_path()
 
-        path = f"{project_path}/shots/{shot_name}/working_files/houdini/{shot_name}_{task_name}_{description}_{version_letter}{padded_version_number}.hiplc"
+        path = f"{project_path}/shots/{shot_name}/working_files/houdini/{shot_name}-{task_name}-{description}-{version_letter}{padded_version_number}.hiplc"
 
         return system.Filepath(path)
 

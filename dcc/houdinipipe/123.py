@@ -120,7 +120,7 @@ def set_node_defaults() -> bool:
 print('Running houdini startup script...')
 extend_scripts()
 extend_hdas()
-add_default_scene()
+# add_default_scene()
 unique_scene_data()
 set_node_defaults()
 # install_pypanels() # TODO add pypanels to be installed
