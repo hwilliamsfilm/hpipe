@@ -17,6 +17,8 @@ class GenericProjectFile(asset.Asset):
     """
     def __init__(self, filepath: 'system.Filepath', asset_name: str = ''):
         super().__init__(asset_name)
+        if not isinstance(filepath, system.Filepath):
+            filepath = system.Filepath(filepath)
         self.filepath = filepath
         self.asset_type = asset.AssetType.PROJECT_FILE
 
@@ -49,9 +51,11 @@ class GenericProjectFile(asset.Asset):
         :return: Major and minor version of the asset.
         """
         filepath = self.filepath
+        log.debug(f"Getting version from project file : {filepath}")
         version_string = filepath.system_path().split('.')[-2].split('-')[-1]
         version_letter: str = version_string[0]
         version_number: int = int(version_string[1:])
+        log.debug(f"Version letter: {version_letter}, Version number: {version_number}")
         return version_letter, version_number
 
     def get_asset_name(self) -> str:

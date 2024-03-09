@@ -5,7 +5,7 @@ except Exception as e:
     print(f'hou not found, not running in houdini: {e}')
     from PySide6 import QtWidgets
 
-from apps.pipeConfig import pipeConfig_gui
+from hpipe.apps.pipeConfig import pipeConfig_gui
 import sys
 
 if __name__ == '__main__':
