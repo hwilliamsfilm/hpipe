@@ -40,15 +40,6 @@ def layer_menu(kwargs) -> list[str]:
     returns the menu for the layer write tool
     """
 
-    # shot = hou.getenv("SHOT")
-    # project = hou.getenv("PROJECT")
-    # database = data_manager.ProjectDataManager()
-    # project_instance = database.get_project(project)
-    # shot_instance = project_instance.get_shot(shot)
-    #
-    # usd_file = shot_instance.get_usd_path()
-    #
-    # stage = Usd.Stage.Open(usd_file.system_path())
     node = hou.pwd()
     try:
         node_input = node.inputs()[0]
@@ -56,14 +47,14 @@ def layer_menu(kwargs) -> list[str]:
         log.debug("No input found")
         return []
     stage = node_input.stage()
-    stack = stage.GetLayerStack(includeSessionLayers=True)
-
+    stack = stage.GetLayerStack(includeSessionLayers=False)
+    print(stack)
     do_core_only = node.parm('coreonly').eval()
+
     core_layers = constants.SHOT_USD_LAYERS
 
     layer_string_menu = ['', 'None']
     for layer in stack:
-        # log.debug(f"Layer: {layer.identifier}")
         if '/' not in layer.identifier:
             continue
 
@@ -74,20 +65,15 @@ def layer_menu(kwargs) -> list[str]:
         # get shot name
         path_corrected = path.replace(r"y:/", r"Y:/") # IDK why but usd really likes to lowercase the drive letter
 
-        log.debug(f"Path: {path}")
-        try:
-            usd_shot = _get_usd_shot(system.Filepath(path_corrected))
-        except Exception as e:
-            log.debug(f"Error getting shot: {e}")
-            usd_shot = "Unknown"
-            continue
+        # find string after /shots/ in path
+        shot_name = path_corrected.split('/shots/')[1].split('/')[0]
 
         if do_core_only:
             if name not in core_layers:
                 continue
 
         layer_string_menu.append(path)
-        layer_string_menu.append(f"{usd_shot}: {filename}") #label
+        layer_string_menu.append(f"{shot_name}: {filename}") #label
 
     return layer_string_menu
 

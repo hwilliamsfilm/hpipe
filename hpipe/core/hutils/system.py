@@ -123,7 +123,9 @@ class Filepath:
     project files, etc.
     """
 
-    def __init__(self, filepath_path: str, filepath_name: str = ''):
+    def __init__(self, filepath_path: str, filepath_name: str = '', relative_root: str = None):
+        if relative_root:
+            filepath_path = os.path.join(relative_root, filepath_path)
         self.filepath_path = path.fix_path(filepath_path)
         self.filepath_path = self.expand_path()
         if filepath_name == '':
@@ -322,4 +324,3 @@ class SystemConfig:
         Returns the home directory for the current system.
         """
         return os.path.expanduser('~')
-

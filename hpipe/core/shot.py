@@ -195,6 +195,25 @@ class Shot:
         usd_dir = f"{self.get_shot_path()}/output/{constants.USD_FOLDER}"
         return system.Directory(usd_dir)
 
+    def get_major_usd_layers(self) -> List['Sdf.Layer']:
+        """
+        Returns the major layers of the USD file
+        :return:
+        """
+        from pxr import Sdf, Usd
+        import os
+        usd_file = self.get_usd_path()
+        layer = Sdf.Layer.FindOrOpen(usd_file.system_path())
+        if not layer:
+            raise ValueError(f"USD file not found at {usd_file.system_path()}")
+
+        usd_layers = []
+        for layer in layer.subLayerPaths:
+            layer_path = system.Filepath(os.path.join(usd_file.get_parent_directory().system_path(), layer)).system_path()
+            usd_layers.append(layer_path)
+
+        return usd_layers
+
     def get_renders(self) -> List[str]:
         """
         Returns the renders contained in the render folder.
