@@ -15,8 +15,11 @@ class GenericProjectFile(asset.Asset):
     Class for a project file. Stores the filepath to the file.
     PROJECT FILE -> ../../../shot_task_desc_version.hiplc
     """
-    def __init__(self, filepath: 'system.Filepath', asset_name: str = ''):
+    def __init__(self, filepath: 'system.Filepath' = None, asset_name: str = ''):
         super().__init__(asset_name)
+        """
+        Creates a project file object and generates or validates the filepath.
+        """
         if not isinstance(filepath, system.Filepath):
             filepath = system.Filepath(filepath)
         self.filepath = filepath
@@ -138,6 +141,16 @@ class NukeProjectFile(GenericProjectFile):
     def __repr__(self) -> str:
         return f"NukeProjectFile <{self.filepath}> from " \
                f"<{self.filepath.get_parent_directory()}>"
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Converts the asset to a dictionary.
+        :return: Dictionary representation of the asset.
+        """
+        return {
+            'asset_name': self.asset_name,
+            'filepath': self.filepath.system_path()
+        }
 
 
 def project_file_from_filepath(project_filepath: 'system.Filepath') -> 'GenericProjectFile':

@@ -49,20 +49,10 @@ def fill_defaults(node):
     return writepath
 
 
-def knobChanged():
+def refresh_knobs():
     """
-    Currently, this function will execute whenever a knob is changed in the entire nuke session.
-    # TODO is this the best way to do this? Is there a smaller scope?
+    Refreshes the knobs for the filewrite node.
     """
-
-    import nuke
-    # EXIT IF NOT KNOBS
-
-    k = nuke.thisKnob()
-    knobs = ['Descriptor', 'Version', 'format', 'Location', 'use_project_version', 'override_shot', 'do_override_shot']
-    if k.name() not in knobs:
-        return
-
     # DO KNOB CHANGE
     import nuke
     from hpipe.assets import projectFile
@@ -84,6 +74,12 @@ def knobChanged():
 
     pipe_shot = project_database.get_project(project).get_shot(shot)
     pipe_project = project_database.get_project(project)
+
+    if not pipe_shot:
+        log.debug(f"Shot not found: {shot}")
+        return
+
+    log.debug(f"MERP: {pipe_shot}")
 
     if node.knob('do_override_shot').value() == 1:
         try:
@@ -143,3 +139,28 @@ def knobChanged():
         )
 
     node.knob('filepath').setValue(writepath)
+
+
+def knobChanged():
+    """
+    Currently, this function will execute whenever a knob is changed in the entire nuke session.
+    # TODO is this the best way to do this? Is there a smaller scope?
+    """
+
+    import nuke
+    # EXIT IF NOT KNOBS
+
+    k = nuke.thisKnob()
+    knobs = ['Descriptor', 'Version', 'format', 'Location', 'use_project_version', 'override_shot', 'do_override_shot']
+    if k.name() not in knobs:
+        return
+
+    refresh_knobs()
+
+
+def onCreate():
+    """
+    Runs when the filewrite node is created.
+    """
+    print('onCreate')
+    refresh_knobs()

@@ -7,7 +7,6 @@ from hpipe.core.hutils import logger, system
 log = logger.setup_logger()
 log.debug("data_accessor.py loaded")
 
-
 class JsonDataAccessor:
     """
     Json data accessor subclass of AbstractDataAccessor. This is used as the primary interface for the

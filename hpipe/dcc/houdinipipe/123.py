@@ -19,7 +19,7 @@ class HoudiniPipe:
     stable_hda = [
         r'$HH/otls/',
         r'Y:/hpipe/hpipe/dcc/houdinipipe/hda/resource',
-        r'Y:/hloptools/hloptools/hda',
+        r'Y:/hloptools/hloptools/hloptools/hda',
         r"Y:\_global_assets\project_hda",
     ]
 
