@@ -101,7 +101,13 @@ class ProjectOverview(QtWidgets.QWidget):
     Project Overview Panel where I can see and edit all projects and shots. This is a project management tool
     and not a viewer.
     """
-    def __init__(self, parent=None, font_scale: float = 1.0):
+    def __init__(self,
+                 parent=None,
+                 font_scale: float = 1.0,
+                 file_dropper: bool = True,
+                 sidebar: bool = True,
+                 commit_selection: bool = False):
+
         super(ProjectOverview, self).__init__(parent)
 
         small_font = int(15 * font_scale)
@@ -226,7 +232,8 @@ class ProjectOverview(QtWidgets.QWidget):
         self.button_layout = QtWidgets.QVBoxLayout()
         self.button_layout.setSpacing(10)
         self.button_layout.setAlignment(QtCore.Qt.AlignTop)  # type: ignore
-        self.tree_button_layout.addLayout(self.button_layout)
+        if sidebar:
+            self.tree_button_layout.addLayout(self.button_layout)
 
         # Add shot button
         self.add_shot_button = QtWidgets.QPushButton('Add Shot')
@@ -313,7 +320,18 @@ class ProjectOverview(QtWidgets.QWidget):
         self.drag_drop_combo_layout.addWidget(self.drag_drop_combo)
         self.drag_drop_combo_layout.addWidget(self.loading_bar)
         self.drag_drop_layout.addLayout(self.drag_drop_combo_layout)
-        self.main_layout.addLayout(self.drag_drop_layout)
+
+        if file_dropper:
+            self.main_layout.addLayout(self.drag_drop_layout)
+
+        self.commit_selection_layout = QtWidgets.QHBoxLayout()
+        self.commit_selection_button = QtWidgets.QPushButton("Select Shot")
+        self.commit_selection_button.setFixedHeight(40)
+        self.commit_selection_layout.addWidget(self.commit_selection_button)
+        self.commit_selection_button.clicked.connect(self.commit_selection)
+
+        if commit_selection:
+            self.main_layout.addLayout(self.commit_selection_layout)
 
         self.setLayout(self.main_layout)
 
@@ -554,6 +572,27 @@ class ProjectOverview(QtWidgets.QWidget):
             log.error(e)
             return False
         self.refresh_tree(refresh_data=True)
+        return True
+
+    def commit_selection(self) -> bool:
+        """
+        Return the selected shot and close the window.
+        :return: True if successful.
+        """
+        selected_shot = self.tree.selectedItems()[0]
+        shot_name = selected_shot.text(0)
+        selected_project = self.get_top_parent(selected_shot)
+        try:
+            project_name = selected_project.text(0).replace(" ", "_").lower()
+            project_from_db = self.database.get_project(project_name)
+            shot_from_db = project_from_db.get_shot(shot_name)
+        except Exception as e:
+            log.error(e)
+            return False
+
+        # self.close()
+        log.debug(f"Selected shot: {shot_from_db}")
+        log.debug(f"Selected project: {project_from_db}")
         return True
 
     def get_top_parent(self, item):

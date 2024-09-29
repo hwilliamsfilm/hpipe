@@ -67,6 +67,8 @@ class HoudiniSession:
 
         latest_version: Union[None, tuple[str, int]] = None
         for hip_file in matching_hipfiles:
+            if 'bak' in hip_file.filepath.system_path():
+                continue
             version = hip_file.get_version()
             if not latest_version:
                 latest_version = version
