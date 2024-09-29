@@ -1,9 +1,9 @@
 
 # hPipe
 
-hPipe is a collection of tools focused around a small portable USD VFX pipeline. Currently, hPipe has hook-ins for Nuke and Houdini with more coming soon. 
+hPipe is a collection of tools focused around a small and portable USD VFX pipeline. Currently, hPipe has hook-ins for Nuke and Houdini with more coming soon. 
 
-The package depends on two databases: a **project database** that manages active projects, and an **asset database** that can store different asset types: Image Sequences, USD components, ProjectFiles, and Reviewables.
+The package relies on two databases: a **project database** that manages active projects, and an **asset database** that can store different asset types: Image Sequences, USD components, ProjectFiles, and Reviewables.
 
 # Package Features:
 

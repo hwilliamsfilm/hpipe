@@ -28,7 +28,8 @@ class Directory:
     Base class for a directory on disk. This class is meant to be very generic and only describe the most basic
     properties of a directory. It is meant to be subclassed to create more specific directory types.
     """
-    def __init__(self, directory_path: str, directory_name: str = ''):
+    def __init__(self, directory_path: str, directory_name: str = '', force_raw_path: bool = False):
+        self.force_raw_path = force_raw_path
         self.directory_path = path.fix_path(directory_path)
         if directory_name == '':
             directory_name = os.path.basename(directory_path)
@@ -106,7 +107,7 @@ class Directory:
         """
         Returns the system path of the directory.
         """
-        self.directory_path = Filepath(self.directory_path).system_path()
+        self.directory_path = Filepath(self.directory_path, force_raw_path=self.force_raw_path).system_path()
         return self.directory_path
 
     def exists(self) -> bool:
@@ -123,9 +124,8 @@ class Filepath:
     project files, etc.
     """
 
-    def __init__(self, filepath_path: str, filepath_name: str = '', relative_root: str = None):
-        if relative_root:
-            filepath_path = os.path.join(relative_root, filepath_path)
+    def __init__(self, filepath_path: str, filepath_name: str = '', force_raw_path: bool = False):
+        self.force_raw_path = force_raw_path
         self.filepath_path = path.fix_path(filepath_path)
         self.filepath_path = self.expand_path()
         if filepath_name == '':
@@ -221,6 +221,9 @@ class Filepath:
         """
         sys_config = SystemConfig()
         environment = sys_config.system
+
+        if self.force_raw_path:
+            return self.filepath_path
 
         if '~' in self.filepath_path:
             self.filepath_path.replace('~', sys_config.get_home())
@@ -324,3 +327,4 @@ class SystemConfig:
         Returns the home directory for the current system.
         """
         return os.path.expanduser('~')
+

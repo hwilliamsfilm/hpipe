@@ -6,7 +6,8 @@ import hou
 from hpipe.core import data_manager
 from hpipe.assets import projectFile
 from enum import Enum
-from hpipe.core.hutils import logger
+from hpipe.core.hutils import logger, system
+from hpipe.dcc.houdinipipe import session
 
 # from importlib import reload
 
@@ -26,7 +27,9 @@ class SceneControlConstants(Enum):
         'CACHE_PATH',
         'RENDER_PATH',
         'TASK',
-        'DESCRIPTION'
+        'DESCRIPTION',
+        'VERSION_MAJOR',
+        'VERSION_MINOR',
     ]
 
     project_global_vars: List[str] = [
@@ -106,6 +109,8 @@ def shot_menu() -> List[str]:
     """
     menu = []
     name = hou.getenv('PROJECT')
+    if not name:
+        return []
     project = data_manager.ProjectDataManager().get_project(name)
     for shot in project.get_shots():
         menu.append(shot.name)
@@ -121,6 +126,7 @@ def hip_menu() -> List[str]:
     database = data_manager.ProjectDataManager()
     project_name = hou.getenv('PROJECT')
     shot_name = hou.getenv('SHOT')
+
     if not shot_name or not project_name:
         return []
     if shot_name == '-' or project_name == '-':
@@ -173,14 +179,20 @@ def set_project(kwargs: Dict[Any, Any]) -> bool:
     return True
 
 
-def set_shot(kwargs) -> bool:
+def set_shot(kwargs: dict = None, node: 'hou.node' = None) -> bool:
     """
     Set the shot based on the selected shot in the scene control node. If no shot is selected, unset all shot
     variables.
     :param kwargs: The kwargs from the houdini event handler.
+    :param node: The node to set the shot on.
     :return: True if successful.
     """
-    node = kwargs['node']
+    if kwargs:
+        node = kwargs['node']
+
+    if not kwargs and not node:
+        return False
+
     shot_name = node.evalParm('shot')
     task = node.evalParm('task')
     description = node.evalParm('description')
@@ -200,7 +212,6 @@ def set_shot(kwargs) -> bool:
 
     project_name = hou.getenv('PROJECT')
     project = database.get_project(project_name)
-
     shot = project.get_shot(shot_name)
 
     # TODO: potentially this should be a for loop over the shot global vars enum
@@ -213,6 +224,14 @@ def set_shot(kwargs) -> bool:
     set_global('FSTART', str(shot.frame_start))
     set_global('FEND', str(shot.frame_end))
 
+    project_file_path = hou.getenv('HIPFILE')
+    try:
+        project_file = projectFile.HoudiniProjectFile(system.Filepath(project_file_path))
+        version_major, version_minor = project_file.get_version()
+        set_global('VERSION_MAJOR', version_major)
+        set_global('VERSION_MINOR', str(version_minor))
+    except Exception as e:
+        log.error(f"Could not get version from project file: {e}")
 
     hou.playbar.setFrameRange(float(shot.frame_start), float(shot.frame_end))
     hou.playbar.setPlaybackRange(float(shot.frame_start), float(shot.frame_end))
@@ -267,4 +286,29 @@ def load_hip_file() -> bool:
     """
     Load the selected hip file.
     """
-    raise NotImplementedError
+    node = hou.pwd()
+    hip_file_parm = node.parm('hip').eval()
+    hou.hipFile.load(hip_file_parm)
+
+
+def save_new_version() -> bool:
+    """
+    Saves a new version of the current project file.
+    :returns: True if the save was successful, False otherwise.
+    """
+
+    sesh = session.HoudiniSession()
+
+    if sesh.version:
+        sesh.version = (sesh.version[0], sesh.version[1] + 1)
+    else:
+        sesh.version = ('A', 1)
+    new_filepath = sesh.get_filepath()
+    if not new_filepath:
+        return False
+    hou.hipFile.save(new_filepath.system_path())
+
+    set_shot(node=hou.pwd())
+
+    return True
+

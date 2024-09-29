@@ -232,3 +232,4 @@ class Megascan3dAssetAccessor(AbstractAssetAccessor):
                 }
 
         return material_textures
+

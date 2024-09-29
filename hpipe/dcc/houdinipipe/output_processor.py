@@ -3,9 +3,11 @@ from husd.outputprocessor import OutputProcessor
 
 
 class ReviewOutputProcessor(OutputProcessor):
+
     @staticmethod
     def name():
         return "merp"
+
     @staticmethod
     def displayName():
         return "Display Merp"
@@ -25,7 +27,6 @@ class ReviewOutputProcessor(OutputProcessor):
     def processReferencePath(self, asset_path, referencing_layer_path, asset_is_layer):
         # Make file path pointers relative to the source file's location
         return 'merp'
-
 
 # Must have: module-level function to return the processor class
 def usdOutputProcessor():
