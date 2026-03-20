@@ -252,15 +252,16 @@ def sequence_factory(file_paths: List['system.Filepath'], file_name: str = '') -
     :param file_name: Name of the image sequence
     :return: Image sequence
     """
-    file_path_extension = file_paths[0].get_extension()
+    file_path_extension = file_paths[0].get_extension().lower()
     if file_path_extension == 'exr':
         return ExrImageSequence(file_paths, file_name)
-    elif file_path_extension == 'jpg':
+    elif file_path_extension in ('jpg', 'jpeg'):
         return JpgImageSequence(file_paths, file_name)
     elif file_path_extension == 'png':
         return PngImageSequence(file_paths, file_name)
     else:
-        raise ValueError(f"Could not create image sequence from {file_paths}.")
+        # tif/tiff/dpx/tga and any future formats fall back to the generic class
+        return GenericImageSequence(file_paths, file_name)
 
 
 def sequences_from_directory(directory: system.Directory, temp: bool = True) -> List[GenericImageSequence]:
@@ -288,7 +289,9 @@ def sequences_from_directory(directory: system.Directory, temp: bool = True) -> 
                 log.warning(f"Skipping temp file {file}.")
                 continue
 
-            if system.Filepath(full_path).get_extension() not in ['exr', 'jpg', 'png']:
+            if system.Filepath(full_path).get_extension().lower() not in (
+                'exr', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dpx', 'tga'
+            ):
                 log.warning(f"{file} is not a valid image file. Skipping..")
                 continue
 

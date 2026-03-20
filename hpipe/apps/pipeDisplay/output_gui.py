@@ -21,18 +21,64 @@ log = logger.setup_logger()
 log.debug("output_gui.py loaded")
 
 
+# ---------------------------------------------------------------------------
+# Background worker: scan directories and build the reviewable list
+# ---------------------------------------------------------------------------
+
+class ReviewableLoader(QtCore.QThread):
+    """
+    Fetches the list of Reviewable objects from disk in a background thread so
+    the main thread is never blocked by directory scans.
+
+    Emits:
+      - ``finished(list)`` — the complete reviewable list once scanning is done.
+      - ``error(str)``     — if an exception occurs.
+    """
+    finished = QtCore.Signal(list)
+    error = QtCore.Signal(str)
+
+    def __init__(self, shot_list: Optional[List[shot.Shot]],
+                 directory_type: str, filter_text: str):
+        super().__init__()
+        self._shot_list = shot_list
+        self._directory_type = directory_type
+        self._filter_text = filter_text
+
+    def run(self):
+        try:
+            result = output_utils.get_reviewables(
+                self._shot_list, self._directory_type, self._filter_text
+            )
+            self.finished.emit(result or [])
+        except Exception as exc:
+            log.error(f"ReviewableLoader error: {exc}")
+            self.error.emit(str(exc))
+
+
+# ---------------------------------------------------------------------------
+# Background worker: load thumbnails as QImage (safe for non-main threads)
+# ---------------------------------------------------------------------------
+
 class ThumbnailLoader(QtCore.QThread):
     """
-    Thread for loading thumbnails in the background.
-    Emits thumbnail_loaded(pixmap, index) as each image is ready.
-    Emits progress(int) with a 0-100 percentage after each item.
+    Loads thumbnails for each reviewable in a background thread.
+
+    Qt rule: ``QPixmap`` must only be created in the main (GUI) thread.
+    We therefore emit ``QImage`` objects — QImage is thread-safe — and let
+    the main-thread slot convert them to QPixmap.
+
+    Emits:
+      - ``thumbnail_loaded(QImage, int)`` — image + reviewable index.
+      - ``progress(int)``                 — 0-100 completion percentage.
     """
-    thumbnail_loaded = QtCore.Signal(QtGui.QPixmap, int)
+    thumbnail_loaded = QtCore.Signal(QtGui.QImage, int)
     progress = QtCore.Signal(int)
 
-    def __init__(self, reviewable_list: List[reviewable.Reviewable]):
+    def __init__(self, reviewable_list: List[reviewable.Reviewable],
+                 fallback_path: str):
         super().__init__()
         self.reviewable_list = reviewable_list
+        self._fallback_path = fallback_path
         self._running = True
 
     def run(self):
@@ -40,15 +86,23 @@ class ThumbnailLoader(QtCore.QThread):
         for index, rev in enumerate(self.reviewable_list):
             if not self._running:
                 break
-            image = rev.get_thumbnail_image()
-            if image:
-                thumbnail = QtGui.QPixmap(image.system_path())
-            else:
-                thumbnail = QtGui.QPixmap(output_utils.Constants.TEMP_IMAGE.system_path())
+            try:
+                image_fp = rev.get_thumbnail_image()
+                if image_fp:
+                    qimage = QtGui.QImage(image_fp.system_path())
+                    if qimage.isNull():
+                        raise ValueError("QImage returned null")
+                else:
+                    raise ValueError("no thumbnail path")
+            except Exception:
+                qimage = QtGui.QImage(self._fallback_path)
+
             if self._running:
-                self.thumbnail_loaded.emit(thumbnail, index)
+                self.thumbnail_loaded.emit(qimage, index)
                 pct = int((index + 1) / total * 100) if total else 100
                 self.progress.emit(pct)
+
+            # brief yield so the main thread can process the signal
             time.sleep(0.001)
 
     def stop(self):
@@ -57,15 +111,24 @@ class ThumbnailLoader(QtCore.QThread):
         self.wait()
 
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
 def _sidebar_label(text: str) -> QtWidgets.QLabel:
     lbl = QtWidgets.QLabel(text)
     lbl.setStyleSheet(style.SIDEBAR_LABEL_STYLE)
     return lbl
 
 
+# ---------------------------------------------------------------------------
+# Main viewer widget
+# ---------------------------------------------------------------------------
+
 class OutputViewer(QtWidgets.QDialog):
     """
     Viewer panel for browsing render outputs, comps, and assets.
+    All disk I/O runs in background threads — the main thread stays responsive.
     """
     def __init__(self,
                  parent=None,
@@ -86,7 +149,10 @@ class OutputViewer(QtWidgets.QDialog):
         self.isDialog = not show_side_bar
 
         self.database = data_manager.ProjectDataManager()
-        self.loader_thread: Optional[ThumbnailLoader] = None
+        self._reviewable_loader: Optional[ReviewableLoader] = None
+        self._thumbnail_loader: Optional[ThumbnailLoader] = None
+        # Keep the current reviewable list so button click → filepath works.
+        self._current_reviewables: List[reviewable.Reviewable] = []
 
         # ── Header ─────────────────────────────────────────────────────────
         title_layout = QtWidgets.QHBoxLayout()
@@ -101,7 +167,7 @@ class OutputViewer(QtWidgets.QDialog):
         title_layout.addWidget(title_label)
         title_layout.addStretch()
 
-        # ── Content area: thumbnail grid + list ────────────────────────────
+        # ── Content area ───────────────────────────────────────────────────
         self.flow_layout = output_widgets.FlowLayout()
         thumb_container = QtWidgets.QWidget()
         thumb_container.setLayout(self.flow_layout)
@@ -125,8 +191,8 @@ class OutputViewer(QtWidgets.QDialog):
         self.list_layout.horizontalHeader().setVisible(False)
 
         self.stacked = QtWidgets.QStackedWidget()
-        self.stacked.addWidget(self.thumbnail_scroll)  # index 0 = icon view
-        self.stacked.addWidget(self.list_layout)       # index 1 = list view
+        self.stacked.addWidget(self.thumbnail_scroll)  # 0 = icon view
+        self.stacked.addWidget(self.list_layout)       # 1 = list view
 
         # ── Sidebar ────────────────────────────────────────────────────────
         self.directory_type = QtWidgets.QComboBox()
@@ -167,7 +233,7 @@ class OutputViewer(QtWidgets.QDialog):
         # ── Bottom bar ─────────────────────────────────────────────────────
         self.icon_view = QtWidgets.QCheckBox("Icon View")
         self.filter = QtWidgets.QLineEdit()
-        self.filter.setPlaceholderText("Filter...")
+        self.filter.setPlaceholderText("Filter…")
         self.loading_bar = QtWidgets.QProgressBar()
         self.loading_bar.setRange(0, 100)
         self.loading_bar.setTextVisible(False)
@@ -179,7 +245,7 @@ class OutputViewer(QtWidgets.QDialog):
         bottom_bar.addWidget(self.filter, stretch=1)
         bottom_bar.addWidget(self.loading_bar, stretch=1)
 
-        # ── Body layout ────────────────────────────────────────────────────
+        # ── Body ───────────────────────────────────────────────────────────
         body_layout = QtWidgets.QHBoxLayout()
         body_layout.addWidget(self.stacked, stretch=1)
         if show_side_bar:
@@ -193,13 +259,12 @@ class OutputViewer(QtWidgets.QDialog):
         main_layout.addLayout(body_layout, stretch=1)
         main_layout.addLayout(bottom_bar)
 
-        # ── Size / position ────────────────────────────────────────────────
         w, h = size if size else (1000, 800)
         self.resize(w, h)
         if position:
             self.move(position[0], position[1])
 
-        # ── Populate combo boxes ───────────────────────────────────────────
+        # ── Populate combos ────────────────────────────────────────────────
         self.directory_type.addItems(output_utils.Constants.DIRECTORY_TYPES.keys())  # type: ignore
         self.show_selection.addItems(output_utils.Constants.SHOWS)  # type: ignore
 
@@ -218,7 +283,7 @@ class OutputViewer(QtWidgets.QDialog):
         self.directory_type.currentIndexChanged.connect(lambda: self.update_combo("type"))
         self.sequence_toggle.toggled.connect(self.update_outputs)
         self.filter.returnPressed.connect(self.update_outputs)
-        self.size_slider.valueChanged.connect(self.update_outputs)
+        self.size_slider.valueChanged.connect(self._on_size_changed)
 
     # ── Slots ─────────────────────────────────────────────────────────────
 
@@ -237,35 +302,75 @@ class OutputViewer(QtWidgets.QDialog):
             self.shot_selection.clear()
             self.shot_selection.addItems(
                 output_utils.shots_from_show(current_project, database=self.database))
-        elif combo_type == "shot" or combo_type == "type":
+        elif combo_type in ("shot", "type"):
             self.update_outputs()
         return True
 
     def update_outputs(self) -> bool:
-        if self.loader_thread and self.loader_thread.isRunning():
-            self.loader_thread.stop()
-
+        """
+        Start a background scan for reviewables.  The UI is not blocked.
+        """
+        self._stop_all_workers()
         self.clear_flow_layout()
         self.clear_list_layout()
+        self._current_reviewables = []
         self.loading_bar.setValue(0)
 
-        output_reviewables = output_utils.get_reviewables(
+        self._reviewable_loader = ReviewableLoader(
             self.current_shots(),
             self.directory_type.currentText(),
-            self.filter.text())
-        log.debug("Updating outputs: {}".format(output_reviewables))
+            self.filter.text(),
+        )
+        self._reviewable_loader.finished.connect(self._on_reviewables_ready)
+        self._reviewable_loader.error.connect(
+            lambda msg: log.error(f"ReviewableLoader: {msg}"))
+        self._reviewable_loader.start()
+        return True
+
+    def _on_reviewables_ready(self, output_reviewables: List[reviewable.Reviewable]):
+        """Called in the main thread once the directory scan is complete."""
+        self._current_reviewables = output_reviewables
+        log.debug(f"Reviewables ready: {output_reviewables}")
+
         self.update_flow_layout(output_reviewables)
         self.update_list_layout(output_reviewables)
 
         if not output_reviewables:
             self.loading_bar.setValue(100)
-            return False
+            return
 
-        self.loader_thread = ThumbnailLoader(output_reviewables)
-        self.loader_thread.thumbnail_loaded.connect(self.update_thumbnail_image)
-        self.loader_thread.progress.connect(self.loading_bar.setValue)
-        self.loader_thread.start()
-        return True
+        fallback = output_utils.Constants.TEMP_IMAGE.system_path()
+        self._thumbnail_loader = ThumbnailLoader(output_reviewables, fallback)
+        self._thumbnail_loader.thumbnail_loaded.connect(self._on_thumbnail_ready)
+        self._thumbnail_loader.progress.connect(self.loading_bar.setValue)
+        self._thumbnail_loader.start()
+
+    def _on_thumbnail_ready(self, qimage: QtGui.QImage, index: int):
+        """
+        Receives a QImage from the background thread and converts it to a
+        QPixmap here in the main thread (the only thread where QPixmap is safe).
+        """
+        try:
+            button = self.flow_layout.itemAt(index).widget()
+            if button:
+                pixmap = QtGui.QPixmap.fromImage(qimage)
+                button.setIcon(QtGui.QIcon(pixmap))
+        except (AttributeError, TypeError):
+            pass
+
+    def _on_size_changed(self):
+        """Resize existing buttons in-place without re-scanning disk."""
+        size = self.size_slider.value()
+        for i in range(self.flow_layout.count()):
+            btn = self.flow_layout.itemAt(i).widget()
+            if btn:
+                btn.setIconSize(QtCore.QSize(int(size / 1.2), size))  # type: ignore
+                btn.setFixedSize(size, size + 20)
+                font = btn.font()
+                font.setPointSize(max(7, int(size / 25)))
+                btn.setFont(font)
+
+    # ── Data accessors ─────────────────────────────────────────────────────
 
     def current_show(self) -> project.Project:
         return self.database.get_project(self.show_selection.currentText())
@@ -277,6 +382,8 @@ class OutputViewer(QtWidgets.QDialog):
         if self.sequence_toggle.isChecked():
             return project_instance.get_shots()
         return [project_instance.get_shot(self.shot_selection.currentText())]
+
+    # ── Layout helpers ─────────────────────────────────────────────────────
 
     def clear_flow_layout(self) -> bool:
         for i in reversed(range(self.flow_layout.count())):
@@ -290,15 +397,15 @@ class OutputViewer(QtWidgets.QDialog):
         self.list_layout.setRowCount(0)
         return True
 
-    def update_flow_layout(self, output_reviewables: Optional[List[reviewable.Reviewable]]) -> bool:
+    def update_flow_layout(self, output_reviewables: List[reviewable.Reviewable]) -> bool:
         if not output_reviewables:
             return False
         size = self.size_slider.value()
+        fallback_pixmap = QtGui.QPixmap(output_utils.Constants.TEMP_IMAGE.system_path())
         for rev in output_reviewables:
             button = QtWidgets.QToolButton()
             button.setText(rev.asset_name)
-            pixmap = QtGui.QPixmap(output_utils.Constants.TEMP_IMAGE.system_path())
-            button.setIcon(QtGui.QIcon(pixmap))
+            button.setIcon(QtGui.QIcon(fallback_pixmap))
             button.setIconSize(QtCore.QSize(int(size / 1.2), size))  # type: ignore
             button.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)  # type: ignore
             font = button.font()
@@ -307,11 +414,11 @@ class OutputViewer(QtWidgets.QDialog):
             button.setFixedSize(size, size + 20)
             button.setToolTip(rev.asset_name)
             if self.isDialog:
-                button.clicked.connect(self.exit)
+                button.clicked.connect(self._on_button_clicked)
             self.flow_layout.addWidget(button)
         return True
 
-    def update_list_layout(self, output_reviewables: Optional[List[reviewable.Reviewable]]) -> bool:
+    def update_list_layout(self, output_reviewables: List[reviewable.Reviewable]) -> bool:
         if not output_reviewables:
             return False
         self.list_layout.setRowCount(len(output_reviewables))
@@ -319,21 +426,30 @@ class OutputViewer(QtWidgets.QDialog):
             self.list_layout.setItem(count, 0, QtWidgets.QTableWidgetItem(rev.asset_name))
         return True
 
-    def update_thumbnail_image(self, thumbnail: QtGui.QPixmap, iter_num: int) -> bool:
-        try:
-            button = self.flow_layout.itemAt(iter_num).widget()
-            if button:
-                button.setIcon(QtGui.QIcon(thumbnail))
-            return True
-        except (AttributeError, TypeError):
-            pass
-        return False
+    # ── Worker lifecycle ───────────────────────────────────────────────────
+
+    def _stop_all_workers(self):
+        for worker in (self._thumbnail_loader, self._reviewable_loader):
+            if worker and worker.isRunning():
+                try:
+                    worker.stop()
+                except AttributeError:
+                    worker.requestInterruption()
+                    worker.wait()
+
+    # ── Dialog exit ────────────────────────────────────────────────────────
+
+    def _on_button_clicked(self):
+        sender = self.sender()
+        self._stop_all_workers()
+        if sender:
+            self.return_value["filepath"] = sender.text()
+            self.accept()
 
     def exit(self) -> str:
-        selected_item = self.sender()
-        if self.loader_thread:
-            self.loader_thread.stop()
-        if selected_item:
-            self.return_value["filepath"] = selected_item.text()
-            self.accept()
+        self._on_button_clicked()
         return self.return_value.get("filepath", "")
+
+    def closeEvent(self, event):
+        self._stop_all_workers()
+        super().closeEvent(event)
