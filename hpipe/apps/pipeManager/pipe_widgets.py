@@ -27,34 +27,22 @@ class EditableDelegate(QtWidgets.QStyledItemDelegate):
 
 class MultipleTagWidget(QtWidgets.QWidget):
     """
-    Represents multiple buttons in a widget
+    Renders a row of tag badge buttons for a shot.
     """
     def __init__(self, tags, parent=None):
-        super(MultipleTagWidget,self).__init__(parent)
-        self.layout = QtWidgets.QHBoxLayout()
-
-        self.layout.setAlignment(QtCore.Qt.AlignLeft)
-        self.layout.setContentsMargins(0, 0, 0, 0)
+        super(MultipleTagWidget, self).__init__(parent)
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setAlignment(QtCore.Qt.AlignLeft)  # type: ignore
+        layout.setContentsMargins(0, 0, 0, 0)
 
         ordered_tags = OrderedDict(manager_utils.Constants.TAGS)
-        main_tags = []
-        additional_tags = []
-        for tag in tags:
-            if tag in ordered_tags:
-                main_tags.append(tag)
-            else:
-                additional_tags.append(tag)
+        main_tags = [t for t in tags if t in ordered_tags]
+        additional_tags = [t for t in tags if t not in ordered_tags]
 
         for tag in main_tags:
-            if tag is not None:
-                if tag is not '':
-                    button = manager_utils.create_tag_button(tag)
-                    self.layout.addWidget(button)
-        for tag in additional_tags:
-            if tag is not None:
-                if tag is not '':
-                    if tag is not ["None"]:
-                        button = manager_utils.create_tag_button(tag)
-                        self.layout.addWidget(button)
+            if tag and tag != '':
+                layout.addWidget(manager_utils.create_tag_button(tag))
 
-        self.setLayout(self.layout)
+        for tag in additional_tags:
+            if tag and tag != '' and tag != ["None"]:
+                layout.addWidget(manager_utils.create_tag_button(tag))

@@ -1,55 +1,54 @@
 """
-Pipe Manager GUI for viewing outputs, comps, and renders.
+Pipe Display GUI for viewing outputs, comps, and renders.
 """
 
 import sys
 try:
     import hou
     from PySide2 import QtWidgets, QtCore, QtGui
-except Exception as e:
-    print(f'hou not found, not running in houdini: {e}')
+except Exception:
     from PySide6 import QtWidgets, QtCore, QtGui
 
 from hpipe.core import data_manager, project, shot
 from hpipe.apps.pipeDisplay import output_widgets, output_utils
+from hpipe.apps import style
 from hpipe.core.hutils import logger
 from typing import *
 from hpipe.assets import reviewable
 import time
 
 log = logger.setup_logger()
-log.debug("manager_gui.py loaded")
+log.debug("output_gui.py loaded")
 
 
 class ThumbnailLoader(QtCore.QThread):
     """
-    Thread for loading thumbnails in the background based on the directories in the project.
+    Thread for loading thumbnails in the background.
+    Emits thumbnail_loaded(pixmap, index) as each image is ready.
+    Emits progress(int) with a 0-100 percentage after each item.
     """
     thumbnail_loaded = QtCore.Signal(QtGui.QPixmap, int)
+    progress = QtCore.Signal(int)
 
     def __init__(self, reviewable_list: List[reviewable.Reviewable]):
         super().__init__()
         self.reviewable_list = reviewable_list
-
-        # need to keep track of the thread's running state so we can prevent the thread from emitting signals after
-        # it's already been stopped
         self._running = True
 
     def run(self):
-        """
-        Load thumbnails for each reviewable in the project. Emit a signal when each thumbnail is loaded with the
-        index of the reviewable in the list.
-        """
-        for index, reviewable_instance in enumerate(self.reviewable_list):
-            image = reviewable_instance.get_thumbnail_image()
+        total = len(self.reviewable_list)
+        for index, rev in enumerate(self.reviewable_list):
+            if not self._running:
+                break
+            image = rev.get_thumbnail_image()
             if image:
                 thumbnail = QtGui.QPixmap(image.system_path())
             else:
                 thumbnail = QtGui.QPixmap(output_utils.Constants.TEMP_IMAGE.system_path())
             if self._running:
                 self.thumbnail_loaded.emit(thumbnail, index)
-
-            # sleep for a bit so we don't overload the main thread sending signals back
+                pct = int((index + 1) / total * 100) if total else 100
+                self.progress.emit(pct)
             time.sleep(0.001)
 
     def stop(self):
@@ -58,76 +57,65 @@ class ThumbnailLoader(QtCore.QThread):
         self.wait()
 
 
+def _sidebar_label(text: str) -> QtWidgets.QLabel:
+    lbl = QtWidgets.QLabel(text)
+    lbl.setStyleSheet(style.SIDEBAR_LABEL_STYLE)
+    return lbl
+
+
 class OutputViewer(QtWidgets.QDialog):
     """
-    Project Overview Panel where I can see and edit all projects and shots. This is a project management tool
-    and not a viewer.
+    Viewer panel for browsing render outputs, comps, and assets.
     """
-    def __init__(self, parent=None,
+    def __init__(self,
+                 parent=None,
                  font_scale: float = 1.0,
                  start_project: str = output_utils.Constants.START_PROJECT,
                  show_side_bar: bool = True,
-                 start_type="Assets",
+                 start_type: str = "Assets",
                  position: tuple = None,
                  size: tuple = None,
                  icon_size: int = None):
         super(OutputViewer, self).__init__(parent)
 
+        self.setStyleSheet(style.WINDOW_STYLE)
+        self.setWindowTitle("Output Viewer")
+        self.setWindowIcon(QtGui.QIcon(style.icon_path("germ.png")))
+
         self.return_value = {}
+        self.isDialog = not show_side_bar
 
-        self.isDialog = True
-        if show_side_bar:
-            self.isDialog = False
-
-        small_font = int(15 * font_scale)
-        large_font = int(40 * font_scale)
-        medium_font = int(25 * font_scale)
-        self.button_font = QtGui.QFont("Arial", small_font)
-        self.button_styleSheet = "background-color: #2d2d2d; color: #ffffff;"
-        self.title_font = QtGui.QFont("Helvetica", large_font, QtGui.QFont.Bold)  # type: ignore
-        self.title_font.setItalic(True)
-        self.subtitle_font = QtGui.QFont("Helvetica", small_font, QtGui.QFont.Light)  # type: ignore
-        self.subtitle_font.setItalic(True)
-        self.watermark_font = QtGui.QFont("Helvetica", medium_font, QtGui.QFont.Light)  # type: ignore
-
-        self.setWindowTitle('Output Viewer')
         self.database = data_manager.ProjectDataManager()
-        self.loader_thread: Optional[ThumbnailLoader] = ThumbnailLoader([])
+        self.loader_thread: Optional[ThumbnailLoader] = None
 
-        # make title bar
-        self.title_layout = QtWidgets.QHBoxLayout()
-        self.title_label = QtWidgets.QLabel('Pipe Output Viewer')
-        self.icon = QtWidgets.QLabel()
-        self.icon.setFixedSize(50, 50)
-        self.icon_pixmap = QtGui.QPixmap('../../icons/germ.png')
-        self.icon_pixmap = self.icon_pixmap.scaled(self.icon.size(), QtCore.Qt.KeepAspectRatio)  # type: ignore
-        self.icon.setPixmap(self.icon_pixmap)
-        self.title_layout.addWidget(self.icon)
-        self.title_label.setFont(self.title_font)
-        self.title_label.setStyleSheet("color: rgb(200, 200, 200)")
-        self.title_layout.addWidget(self.title_label)
-        self.title_layout.addStretch()
-        self.main_layout = QtWidgets.QVBoxLayout()
-        self.setWindowIcon(QtGui.QIcon(self.icon_pixmap))
+        # ── Header ─────────────────────────────────────────────────────────
+        title_layout = QtWidgets.QHBoxLayout()
+        icon_label = QtWidgets.QLabel()
+        icon_label.setFixedSize(36, 36)
+        icon_pix = QtGui.QPixmap(style.icon_path("germ.png"))
+        icon_label.setPixmap(icon_pix.scaled(36, 36, QtCore.Qt.KeepAspectRatio,  # type: ignore
+                                             QtCore.Qt.SmoothTransformation))  # type: ignore
+        title_label = QtWidgets.QLabel("Output Viewer")
+        title_label.setFont(style.title_font(font_scale))
+        title_layout.addWidget(icon_label)
+        title_layout.addWidget(title_label)
+        title_layout.addStretch()
 
-        self.body_layout = QtWidgets.QHBoxLayout()
-        self.stackedLayout = QtWidgets.QStackedLayout()
-
+        # ── Content area: thumbnail grid + list ────────────────────────────
         self.flow_layout = output_widgets.FlowLayout()
-        self.thumbnail_layout = QtWidgets.QScrollArea()
-        container = QtWidgets.QWidget()
-        container.setLayout(self.flow_layout)
-        self.thumbnail_layout.setWidget(container)
-        self.thumbnail_layout.setWidgetResizable(True)
-        self.thumbnail_layout.setMinimumWidth(20)
-        self.thumbnail_layout.setMaximumWidth(5000)
+        thumb_container = QtWidgets.QWidget()
+        thumb_container.setLayout(self.flow_layout)
+        self.thumbnail_scroll = QtWidgets.QScrollArea()
+        self.thumbnail_scroll.setWidget(thumb_container)
+        self.thumbnail_scroll.setWidgetResizable(True)
 
-        self.thumbnail_layout.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)  # type: ignore
-
+        self.thumbnail_scroll.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)  # type: ignore
         self.context_menu = QtWidgets.QMenu(self)
         self.open_action = self.context_menu.addAction("Open In Explorer")
         self.open_in_rv_action = self.context_menu.addAction("Open In RV")
         self.move_to_delivery_action = self.context_menu.addAction("Move To Delivery")
+        self.thumbnail_scroll.customContextMenuRequested.connect(
+            lambda pos: self.context_menu.exec_(self.thumbnail_scroll.mapToGlobal(pos)))
 
         self.list_layout = QtWidgets.QTableWidget()
         self.list_layout.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)  # type: ignore
@@ -135,116 +123,94 @@ class OutputViewer(QtWidgets.QDialog):
         self.list_layout.setColumnCount(1)
         self.list_layout.setAlternatingRowColors(True)
         self.list_layout.horizontalHeader().setVisible(False)
-        self.list_layout.setStyleSheet("alternate-background-color: #2d2d2d; background-color: #1d1d1d; color: #ffffff;")
-        self.list_layout.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)  # type: ignore
 
-        self.show_selection = QtWidgets.QComboBox()
-        self.seq_selection = QtWidgets.QComboBox()
-        self.shot_selection = QtWidgets.QComboBox()
+        self.stacked = QtWidgets.QStackedWidget()
+        self.stacked.addWidget(self.thumbnail_scroll)  # index 0 = icon view
+        self.stacked.addWidget(self.list_layout)       # index 1 = list view
+
+        # ── Sidebar ────────────────────────────────────────────────────────
         self.directory_type = QtWidgets.QComboBox()
-
-        self.sequence_toggle = QtWidgets.QCheckBox("Browse by Sequence")
-        self.filter = QtWidgets.QLineEdit()
-        self.filter.setPlaceholderText("Filter")
-        self.icon_view = QtWidgets.QCheckBox("Icon View")
+        self.show_selection = QtWidgets.QComboBox()
+        self.shot_selection = QtWidgets.QComboBox()
+        self.sequence_toggle = QtWidgets.QCheckBox("Browse Full Sequence")
         self.latest_version = QtWidgets.QCheckBox("Latest Version Only")
 
+        icon_size_val = icon_size if icon_size else 100
         self.size_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)  # type: ignore
         self.size_slider.setMinimum(50)
         self.size_slider.setMaximum(400)
-        if not icon_size:
-            icon_size = 100
-        self.size_slider.setValue(icon_size)
-        self.size_slider.setTickInterval(10)
+        self.size_slider.setValue(icon_size_val)
+        self.size_slider.setTickInterval(50)
         self.size_slider.setTickPosition(QtWidgets.QSlider.TicksBelow)  # type: ignore
 
+        sidebar_widget = QtWidgets.QWidget()
+        sidebar_widget.setFixedWidth(200)
+        sidebar_vbox = QtWidgets.QVBoxLayout(sidebar_widget)
+        sidebar_vbox.setContentsMargins(8, 8, 8, 8)
+        sidebar_vbox.setSpacing(6)
+        sidebar_vbox.setAlignment(QtCore.Qt.AlignTop)  # type: ignore
+
+        sidebar_vbox.addWidget(_sidebar_label("TYPE"))
+        sidebar_vbox.addWidget(self.directory_type)
+        sidebar_vbox.addWidget(output_widgets.QHLine())
+        sidebar_vbox.addWidget(_sidebar_label("SHOW"))
+        sidebar_vbox.addWidget(self.show_selection)
+        sidebar_vbox.addWidget(_sidebar_label("SHOT"))
+        sidebar_vbox.addWidget(self.shot_selection)
+        sidebar_vbox.addWidget(output_widgets.QHLine())
+        sidebar_vbox.addWidget(self.sequence_toggle)
+        sidebar_vbox.addWidget(self.latest_version)
+        sidebar_vbox.addWidget(output_widgets.QHLine())
+        sidebar_vbox.addWidget(_sidebar_label("ICON SIZE"))
+        sidebar_vbox.addWidget(self.size_slider)
+
+        # ── Bottom bar ─────────────────────────────────────────────────────
+        self.icon_view = QtWidgets.QCheckBox("Icon View")
+        self.filter = QtWidgets.QLineEdit()
+        self.filter.setPlaceholderText("Filter...")
         self.loading_bar = QtWidgets.QProgressBar()
         self.loading_bar.setRange(0, 100)
         self.loading_bar.setTextVisible(False)
+        self.loading_bar.setFixedHeight(6)
+        self.loading_bar.setValue(0)
 
-        self.loading_bar.setValue(100)
+        bottom_bar = QtWidgets.QHBoxLayout()
+        bottom_bar.addWidget(self.icon_view)
+        bottom_bar.addWidget(self.filter, stretch=1)
+        bottom_bar.addWidget(self.loading_bar, stretch=1)
 
-        button_layout = QtWidgets.QVBoxLayout()
-        button_layout.setAlignment(QtCore.Qt.AlignTop)  # type: ignore
-        # button_layout.addWidget(self.filter)
-        # button_layout.addWidget(output_widgets.QHLine())  # type: ignore
-        # button_layout.addWidget(self.icon_view)
-        # button_layout.addWidget(output_widgets.QHLine())  # type: ignore
-        button_layout.addWidget(self.directory_type)
-        button_layout.addWidget(output_widgets.QHLine())  # type: ignore
-        button_layout.addWidget(self.show_selection)
-        button_layout.addWidget(self.shot_selection)
-        button_layout.addWidget(output_widgets.QHLine())  # type: ignore
-        button_layout.addWidget(self.sequence_toggle)
-        button_layout.addWidget(self.latest_version)
-        button_layout.addWidget(output_widgets.QHLine())  # type: ignore
-        button_layout.addWidget(self.size_slider)
-        # button_layout.addWidget(self.loading_bar)
-
-        self.bottom_bar = QtWidgets.QHBoxLayout()
-        self.bottom_bar.addWidget(self.icon_view)
-        self.bottom_bar.addWidget(self.filter)
-        self.bottom_bar.addWidget(self.loading_bar)
-
-        button_layout.setAlignment(self.loading_bar, QtCore.Qt.AlignBottom)  # type: ignore
-
-        for i in range(button_layout.count()):
-            widget = button_layout.itemAt(i).widget()
-            if widget:
-                widget.setFixedHeight(40)
-                widget.setFont(self.button_font)  # type: ignore
-                widget.setStyleSheet(self.button_styleSheet)
-
-        self.side_bar_layout = button_layout
-        self.side_bar_scroll = QtWidgets.QScrollArea()
-        self.side_bar_scroll.setLayout(self.side_bar_layout)
-        self.side_bar_scroll.setWidgetResizable(True)
-
-        self.stackedLayout.addWidget(self.thumbnail_layout)
-        self.stackedLayout.addWidget(self.list_layout)
-
-        self.body_layout.addLayout(self.stackedLayout)
-
+        # ── Body layout ────────────────────────────────────────────────────
+        body_layout = QtWidgets.QHBoxLayout()
+        body_layout.addWidget(self.stacked, stretch=1)
         if show_side_bar:
-            self.body_layout.addWidget(self.side_bar_scroll)
+            body_layout.addWidget(sidebar_widget)
 
-        self.main_layout.addLayout(self.title_layout)
-        self.main_layout.addLayout(self.body_layout)
-        self.main_layout.addLayout(self.bottom_bar)
+        # ── Main layout ────────────────────────────────────────────────────
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(12, 12, 12, 12)
+        main_layout.setSpacing(8)
+        main_layout.addLayout(title_layout)
+        main_layout.addLayout(body_layout, stretch=1)
+        main_layout.addLayout(bottom_bar)
 
-        self.setLayout(self.main_layout)
-        if not size:
-            size = (1000, 800)
-
-        self.resize(size[0], size[1])
-
+        # ── Size / position ────────────────────────────────────────────────
+        w, h = size if size else (1000, 800)
+        self.resize(w, h)
         if position:
             self.move(position[0], position[1])
 
-        self.body_layout.setStretch(0, 1)
-        self.body_layout.setStretch(1, 0)
-        self.setStyleSheet("background-color: #2d2d2d; color: #ffffff;")
-
-        # Watermark
-        self.watermark_label = QtWidgets.QLabel('2024')
-        self.watermark_label.setFont(self.watermark_font)
-        self.watermark_label.setStyleSheet("color: rgb(200, 200, 200)")
-        self.watermark_label.setAlignment(QtCore.Qt.AlignBottom | QtCore.Qt.AlignRight)
-        self.main_layout.addWidget(self.watermark_label)
-
-        # Combo box values
+        # ── Populate combo boxes ───────────────────────────────────────────
         self.directory_type.addItems(output_utils.Constants.DIRECTORY_TYPES.keys())  # type: ignore
         self.show_selection.addItems(output_utils.Constants.SHOWS)  # type: ignore
 
-        # defaults
+        # ── Defaults ──────────────────────────────────────────────────────
         self.show_selection.setCurrentText(start_project)
-        log.debug("Setting show to: {}".format(start_project))
         self.directory_type.setCurrentText(start_type)
         self.sequence_toggle.setChecked(True)
         self.icon_view.setChecked(True)
         self.update_outputs()
 
-        # Connections
+        # ── Connections ────────────────────────────────────────────────────
         self.icon_view.toggled.connect(self.change_view)
         self.show_selection.currentTextChanged.connect(self.update_shots)
         self.show_selection.currentIndexChanged.connect(lambda: self.update_combo("show"))
@@ -254,187 +220,120 @@ class OutputViewer(QtWidgets.QDialog):
         self.filter.returnPressed.connect(self.update_outputs)
         self.size_slider.valueChanged.connect(self.update_outputs)
 
+    # ── Slots ─────────────────────────────────────────────────────────────
+
     def update_shots(self) -> bool:
-        """
-        Update the shots in the shot selection combobox, primarily used when changing shows.
-        :return: True if successful
-        """
         self.shot_selection.clear()
-        self.shot_selection.addItems(output_utils.shots_from_show(self.show_selection.currentText()))
+        self.shot_selection.addItems(
+            output_utils.shots_from_show(self.show_selection.currentText()))
         return True
 
     def change_view(self):
-        """
-        Change the view of the files when the icon view checkbox is toggled.
-        :return: Bool
-        """
-        if self.icon_view.isChecked():
-            self.stackedLayout.setCurrentIndex(0)
-        else:
-            self.stackedLayout.setCurrentIndex(1)
-        return True
+        self.stacked.setCurrentIndex(0 if self.icon_view.isChecked() else 1)
 
-    def update_combo(self, combo_type: Union[str, None] = None) -> bool:
-        """
-        Update the combo box based on the type
-        :param combo_type: string combo box type
-        :return: True if successful
-        """
+    def update_combo(self, combo_type: Optional[str] = None) -> bool:
         current_project = self.show_selection.currentText()
-
         if combo_type == "show":
             self.shot_selection.clear()
-            self.shot_selection.addItems(output_utils.shots_from_show(current_project, database=self.database))
-        elif combo_type == "shot" or combo_type is "type":
+            self.shot_selection.addItems(
+                output_utils.shots_from_show(current_project, database=self.database))
+        elif combo_type == "shot" or combo_type == "type":
             self.update_outputs()
-            return True
         return True
 
     def update_outputs(self) -> bool:
-        """
-        Update the outputs based on the current combo box / filter values.
-        :return: True if successful
-        """
-        try:
+        if self.loader_thread and self.loader_thread.isRunning():
             self.loader_thread.stop()
-            self.loader_thread.wait()
-        except AttributeError:
-            pass
 
         self.clear_flow_layout()
         self.clear_list_layout()
+        self.loading_bar.setValue(0)
 
-        output_reviewables = output_utils.get_reviewables(self.current_shots(),
-                                                          self.directory_type.currentText(),
-                                                          self.filter.text())
+        output_reviewables = output_utils.get_reviewables(
+            self.current_shots(),
+            self.directory_type.currentText(),
+            self.filter.text())
         log.debug("Updating outputs: {}".format(output_reviewables))
         self.update_flow_layout(output_reviewables)
         self.update_list_layout(output_reviewables)
 
         if not output_reviewables:
+            self.loading_bar.setValue(100)
             return False
 
         self.loader_thread = ThumbnailLoader(output_reviewables)
         self.loader_thread.thumbnail_loaded.connect(self.update_thumbnail_image)
+        self.loader_thread.progress.connect(self.loading_bar.setValue)
         self.loader_thread.start()
         return True
 
     def current_show(self) -> project.Project:
-        """
-        Get the current show from the combo box and return the project object.
-        :return: String show name
-        """
-        project_instance = self.database.get_project(self.show_selection.currentText())
-        return project_instance
+        return self.database.get_project(self.show_selection.currentText())
 
     def current_shots(self) -> Optional[List[shot.Shot]]:
-        """
-        Get the current shot from the combo box and return the shot object.
-        :return: List of shot objects
-        """
-
         project_instance = self.database.get_project(self.show_selection.currentText())
         if not project_instance:
             return None
-        do_sequence = self.sequence_toggle.isChecked()
-        if not do_sequence:
-            shot_instances = [project_instance.get_shot(self.shot_selection.currentText())]
-        else:
-            shot_instances = project_instance.get_shots()
-        return shot_instances
+        if self.sequence_toggle.isChecked():
+            return project_instance.get_shots()
+        return [project_instance.get_shot(self.shot_selection.currentText())]
 
     def clear_flow_layout(self) -> bool:
-        """
-        Clear all widgets from the flow layout.
-        :return: True if successful
-        """
         for i in reversed(range(self.flow_layout.count())):
-            self.flow_layout.itemAt(i).widget().setParent(None)
+            widget = self.flow_layout.itemAt(i).widget()
+            if widget:
+                widget.setParent(None)
         return True
 
     def clear_list_layout(self) -> bool:
-        """
-        Clear all widgets from the list layout.
-        :return: True if successful
-        """
-        self.list_layout.clear()
+        self.list_layout.clearContents()
+        self.list_layout.setRowCount(0)
         return True
 
     def update_flow_layout(self, output_reviewables: Optional[List[reviewable.Reviewable]]) -> bool:
-        """
-        Update the flow layout with the reviewables.
-        :param output_reviewables: List of output reviewables
-        :return: True if successful
-        """
-        buttons = []
-
         if not output_reviewables:
             return False
-
-        for reviewable in output_reviewables:
-            file_name = reviewable.asset_name
+        size = self.size_slider.value()
+        for rev in output_reviewables:
             button = QtWidgets.QToolButton()
-            button.setText(file_name)
+            button.setText(rev.asset_name)
             pixmap = QtGui.QPixmap(output_utils.Constants.TEMP_IMAGE.system_path())
             button.setIcon(QtGui.QIcon(pixmap))
-            size = self.size_slider.value()
-            button.setIconSize(QtCore.QSize(size / 1.2, size))  # type: ignore
+            button.setIconSize(QtCore.QSize(int(size / 1.2), size))  # type: ignore
             button.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)  # type: ignore
             font = button.font()
-            font.setPointSize(int(size / 25))
+            font.setPointSize(max(7, int(size / 25)))
             button.setFont(font)
-            button.setFixedSize(size, size)
-            buttons.append(button)
+            button.setFixedSize(size, size + 20)
+            button.setToolTip(rev.asset_name)
             if self.isDialog:
                 button.clicked.connect(self.exit)
-
-        for button in buttons:
             self.flow_layout.addWidget(button)
         return True
 
     def update_list_layout(self, output_reviewables: Optional[List[reviewable.Reviewable]]) -> bool:
-        """
-        Update the list layout with the reviewables.
-        :param output_reviewables: List of output reviewables
-        :return: True if successful
-        """
         if not output_reviewables:
             return False
         self.list_layout.setRowCount(len(output_reviewables))
-        for count, reviewable in enumerate(output_reviewables):
-            file_name = reviewable.asset_name
-            self.list_layout.setItem(count, 0, QtWidgets.QTableWidgetItem(file_name))
+        for count, rev in enumerate(output_reviewables):
+            self.list_layout.setItem(count, 0, QtWidgets.QTableWidgetItem(rev.asset_name))
         return True
 
-    def update_thumbnail_image(self, thumbnail: 'QtGui.QPixmap', iter_num: int) -> bool:
-        """
-        Update the button thumbnail
-        :param thumbnail: QPixmap thumbnail image to set
-        :param iter_num: int iteration number / index of the button to update
-        :return: True if successful
-        """
+    def update_thumbnail_image(self, thumbnail: QtGui.QPixmap, iter_num: int) -> bool:
         try:
-            log.debug("Updating button thumbnail: {0}".format(iter_num))
             button = self.flow_layout.itemAt(iter_num).widget()
-            button.setIcon(QtGui.QIcon(thumbnail))
-            if self.loading_bar.value() < 95:
-                # change color to yellow
-                self.loading_bar.setStyleSheet("QProgressBar::chunk {background-color: #FFD700;}")
-            else:
-                # change color to green
-                self.loading_bar.setStyleSheet("QProgressBar::chunk {background-color: #00FF00;}")
+            if button:
+                button.setIcon(QtGui.QIcon(thumbnail))
             return True
-        except AttributeError:
+        except (AttributeError, TypeError):
             pass
+        return False
 
     def exit(self) -> str:
-        """
-        Close the window and stop the thread. Return the current item filepath.
-        """
         selected_item = self.sender()
-        self.loader_thread.stop()
-        log.debug(f"Selected item: {selected_item.text}")
+        if self.loader_thread:
+            self.loader_thread.stop()
         if selected_item:
-            log.debug(selected_item.text())
-            self.return_value['filepath'] = selected_item.text()
+            self.return_value["filepath"] = selected_item.text()
             self.accept()
+        return self.return_value.get("filepath", "")
