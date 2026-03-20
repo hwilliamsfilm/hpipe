@@ -34,7 +34,7 @@ class ReviewableLoader(QtCore.QThread):
       - ``finished(list)`` — the complete reviewable list once scanning is done.
       - ``error(str)``     — if an exception occurs.
     """
-    finished = QtCore.Signal(list)
+    finished = QtCore.Signal(list, list)  # (reviewables, warnings)
     error = QtCore.Signal(str)
 
     def __init__(self, shot_list: Optional[List[shot.Shot]],
@@ -46,10 +46,12 @@ class ReviewableLoader(QtCore.QThread):
 
     def run(self):
         try:
+            warnings: list = []
             result = output_utils.get_reviewables(
-                self._shot_list, self._directory_type, self._filter_text
+                self._shot_list, self._directory_type, self._filter_text,
+                warnings_out=warnings,
             )
-            self.finished.emit(result or [])
+            self.finished.emit(result or [], warnings)
         except Exception as exc:
             log.error(f"ReviewableLoader error: {exc}")
             self.error.emit(str(exc))
@@ -239,10 +241,13 @@ class OutputViewer(QtWidgets.QDialog):
         self.loading_bar.setTextVisible(False)
         self.loading_bar.setFixedHeight(6)
         self.loading_bar.setValue(0)
+        self.status_label = QtWidgets.QLabel("")
+        self.status_label.setStyleSheet("color: #ccaa44; font-size: 11px;")
 
         bottom_bar = QtWidgets.QHBoxLayout()
         bottom_bar.addWidget(self.icon_view)
         bottom_bar.addWidget(self.filter, stretch=1)
+        bottom_bar.addWidget(self.status_label, stretch=2)
         bottom_bar.addWidget(self.loading_bar, stretch=1)
 
         # ── Body ───────────────────────────────────────────────────────────
@@ -315,6 +320,7 @@ class OutputViewer(QtWidgets.QDialog):
         self.clear_list_layout()
         self._current_reviewables = []
         self.loading_bar.setValue(0)
+        self.status_label.setText("")
 
         self._reviewable_loader = ReviewableLoader(
             self.current_shots(),
@@ -323,14 +329,26 @@ class OutputViewer(QtWidgets.QDialog):
         )
         self._reviewable_loader.finished.connect(self._on_reviewables_ready)
         self._reviewable_loader.error.connect(
-            lambda msg: log.error(f"ReviewableLoader: {msg}"))
+            lambda msg: self.status_label.setText(f"Error: {msg}"))
         self._reviewable_loader.start()
         return True
 
-    def _on_reviewables_ready(self, output_reviewables: List[reviewable.Reviewable]):
+    def _on_reviewables_ready(self, output_reviewables: List[reviewable.Reviewable],
+                              warnings: List[str]):
         """Called in the main thread once the directory scan is complete."""
         self._current_reviewables = output_reviewables
         log.debug(f"Reviewables ready: {output_reviewables}")
+
+        # Surface any warnings (missing directories, etc.) in the status bar
+        if warnings:
+            self.status_label.setText(f"{len(warnings)} warning(s): {warnings[0]}")
+            self.status_label.setToolTip("\n".join(warnings))
+            for w in warnings:
+                log.warning(w)
+        elif not output_reviewables:
+            self.status_label.setText("No results found.")
+        else:
+            self.status_label.setText(f"{len(output_reviewables)} item(s)")
 
         self.update_flow_layout(output_reviewables)
         self.update_list_layout(output_reviewables)

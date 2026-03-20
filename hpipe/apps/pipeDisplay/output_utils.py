@@ -51,20 +51,29 @@ def shots_from_show(show: str, database: Optional[data_manager.ProjectDataManage
     return shots
 
 
-def get_reviewables(shot_list: Optional[List[shot.Shot]], type: str, filter: str) -> Optional[List[reviewable.Reviewable]]:
+def get_reviewables(shot_list: Optional[List[shot.Shot]], type: str, filter: str,
+                    warnings_out: Optional[List[str]] = None) -> Optional[List[reviewable.Reviewable]]:
     """
     Get a list of reviewables for a given project, shot list, and output type.
 
     Supports: Comp, Plate, Renders, Workarea, Ref, Project Files, Assets.
 
+    All directory-missing conditions are handled gracefully (return []) and
+    logged at WARNING level.  If *warnings_out* is provided, human-readable
+    messages are appended to it so the GUI can display them.
+
     :param shot_list: List of Shot objects to query.
     :param type: Output-type string (must match a key in Constants.DIRECTORY_TYPES).
     :param filter: Case-insensitive substring to filter reviewable names by.
+    :param warnings_out: Optional list to collect user-facing warning strings.
     :return: List of Reviewable objects, or None if *shot_list* is empty.
     """
     log.debug(f"Getting reviewables for {shot_list}")
     if not shot_list:
         return None
+
+    if warnings_out is None:
+        warnings_out = []
 
     reviewables: List[reviewable.Reviewable] = []
 
@@ -79,26 +88,24 @@ def get_reviewables(shot_list: Optional[List[shot.Shot]], type: str, filter: str
 
             elif type == 'Renders':
                 render_dir = shot_item.get_render_path()
-                if render_dir.exists():
-                    reviewables += reviewable.reviewables_from_directory(render_dir)
+                reviewables += reviewable.reviewables_from_directory(render_dir)
 
             elif type == 'Workarea':
                 workarea_dir = shot_item.get_workarea_path()
-                if workarea_dir.exists():
-                    reviewables += reviewable.reviewables_from_directory(workarea_dir)
+                reviewables += reviewable.reviewables_from_directory(workarea_dir)
 
             elif type == 'Ref':
-                # Reference footage / images living under the shot's ref folder.
                 ref_dir = system.Directory(f"{shot_item.get_shot_path()}/ref")
-                if ref_dir.exists():
-                    reviewables += reviewable.reviewables_from_directory(ref_dir)
+                reviewables += reviewable.reviewables_from_directory(ref_dir)
 
             elif type == 'Project Files':
                 for pf in shot_item.get_project_files():
                     reviewables.append(reviewable.ProjectFileReviewable(pf))
 
         except Exception as exc:
-            log.warning(f"Error collecting '{type}' for {shot_item}: {exc}")
+            msg = f"{type} failed for {shot_item.name}: {exc}"
+            log.warning(msg)
+            warnings_out.append(msg)
 
     # ── Database-backed asset reviewables ─────────────────────────────────
     if type == 'Assets':
@@ -107,7 +114,9 @@ def get_reviewables(shot_list: Optional[List[shot.Shot]], type: str, filter: str
             asset_reviewables = assetEntry.reviewable_factory(asset_db.get_assets())
             reviewables += asset_reviewables
         except Exception as exc:
-            log.warning(f"Error loading asset reviewables: {exc}")
+            msg = f"Error loading asset reviewables: {exc}"
+            log.warning(msg)
+            warnings_out.append(msg)
 
     # ── Filter ────────────────────────────────────────────────────────────
     if filter and filter.strip():

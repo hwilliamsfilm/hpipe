@@ -153,31 +153,43 @@ class Shot:
 
     def get_comps(self) -> List['reviewable.Reviewable']:
         """
-        Get list of comps for the project
+        Get list of comps for the shot.
+        Returns an empty list when the comp directory does not exist.
         :return: list of comps
         """
-        comps = reviewable.reviewables_from_directory(self.get_comps_path())
-        return comps
+        comps_path = self.get_comps_path()
+        if not comps_path.exists():
+            log.warning(f"Comp directory does not exist: {comps_path.directory_path}")
+            return []
+        return reviewable.reviewables_from_directory(comps_path)
 
     def get_plates(self) -> List['reviewable.Reviewable']:
         """
         Returns the plates contained in the plate folder.
-        :return: List[str] plates
+        Returns an empty list when the plate directory does not exist.
+        :return: list of plates
         """
-        plates = reviewable.reviewables_from_directory(self.get_plate_path())
-        return plates
+        plate_path = self.get_plate_path()
+        if not plate_path.exists():
+            log.warning(f"Plate directory does not exist: {plate_path.directory_path}")
+            return []
+        return reviewable.reviewables_from_directory(plate_path)
 
     def get_project_files(self) -> List['projectFile.GenericProjectFile']:
         """
         Returns the project files contained in the nuke and houdini folders.
-        :return: List[str] project files
+        Skips directories that do not exist on disk.
+        :return: list of project files
         """
-        nuke_path = self.get_nuke_path()
-        houdini_path = self.get_houdini_path()
-        log.debug(f"Getting project files from {nuke_path} and {houdini_path}")
-        nuke_files = projectFile.project_files_from_directory(nuke_path)
-        houdini_files = projectFile.project_files_from_directory(houdini_path)
-        return nuke_files + houdini_files
+        results: List['projectFile.GenericProjectFile'] = []
+        for label, path_fn in (("Nuke", self.get_nuke_path), ("Houdini", self.get_houdini_path)):
+            directory = path_fn()
+            if not directory.exists():
+                log.warning(f"{label} directory does not exist: {directory.directory_path}")
+                continue
+            log.debug(f"Getting project files from {directory}")
+            results += projectFile.project_files_from_directory(directory)
+        return results
 
     def get_usd_path(self) -> system.Filepath:
         """

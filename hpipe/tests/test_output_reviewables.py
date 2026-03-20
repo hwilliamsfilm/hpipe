@@ -378,17 +378,19 @@ class TestGetReviewables:
         assert len(result) == 1, f"Expected 1 render, got {len(result)}"
         mock_factory.assert_called_once()
 
-    def test_renders_skipped_when_dir_missing(self):
-        """When render dir doesn't exist, should return empty — not crash."""
+    def test_renders_returns_empty_when_dir_missing(self):
+        """When render dir doesn't exist, reviewables_from_directory returns []."""
         get_reviewables = self._import_get_reviewables()
         shot = _make_mock_shot(renders_exist=False)
 
-        with patch("hpipe.apps.pipeDisplay.output_utils.reviewable.reviewables_from_directory") as mock_factory:
+        with patch("hpipe.apps.pipeDisplay.output_utils.reviewable.reviewables_from_directory",
+                    return_value=[]) as mock_factory:
             result = get_reviewables([shot], "Renders", "")
 
         assert result is not None
         assert len(result) == 0
-        mock_factory.assert_not_called()
+        # Factory is now called (the exists guard is inside it), but returns []
+        mock_factory.assert_called_once()
 
     # -- Workarea --
 
@@ -405,15 +407,17 @@ class TestGetReviewables:
         assert len(result) == 1
         mock_factory.assert_called_once()
 
-    def test_workarea_skipped_when_missing(self):
+    def test_workarea_returns_empty_when_missing(self):
         get_reviewables = self._import_get_reviewables()
         shot = _make_mock_shot(workarea_exist=False)
 
-        with patch("hpipe.apps.pipeDisplay.output_utils.reviewable.reviewables_from_directory") as mock_factory:
+        with patch("hpipe.apps.pipeDisplay.output_utils.reviewable.reviewables_from_directory",
+                    return_value=[]) as mock_factory:
             result = get_reviewables([shot], "Workarea", "")
 
         assert len(result) == 0
-        mock_factory.assert_not_called()
+        # Factory is now called (the exists guard is inside it), but returns []
+        mock_factory.assert_called_once()
 
     # -- Ref --
 
@@ -624,13 +628,10 @@ class TestDiagnosticRootCause:
     These tests document the specific bugs that cause non-Comp types to fail.
     """
 
-    def test_get_comps_has_no_exists_guard(self):
+    def test_get_comps_returns_empty_for_missing_dir(self):
         """
-        shot.get_comps() calls reviewables_from_directory() with NO exists()
-        check.  If the comp dir is missing, it raises FileNotFoundError.
-
-        This means comps only work because the directories actually exist on
-        disk. Every other type that ALSO lacks a guard will fail the same way.
+        FIX VERIFIED: shot.get_comps() now has an exists() guard.
+        If the comp dir is missing, it returns [] instead of raising.
         """
         from hpipe.core import shot as shot_module
         mock_project = MagicMock()
@@ -640,15 +641,14 @@ class TestDiagnosticRootCause:
         s.project = mock_project
         s.base_path = "Y:/projects/2023/test/shots/"
 
-        # Patch os.listdir to simulate missing directory
-        with patch("os.listdir", side_effect=FileNotFoundError("No such dir")):
-            with pytest.raises(FileNotFoundError):
-                s.get_comps()
+        with patch("os.path.exists", return_value=False):
+            result = s.get_comps()
+            assert result == [], f"Expected empty list, got {result}"
 
-    def test_get_plates_has_no_exists_guard(self):
+    def test_get_plates_returns_empty_for_missing_dir(self):
         """
-        Same as comps — get_plates() has no exists() guard.
-        If the plate dir is missing, FileNotFoundError propagates up.
+        FIX VERIFIED: shot.get_plates() now has an exists() guard.
+        If the plate dir is missing, it returns [] instead of raising.
         """
         from hpipe.core import shot as shot_module
         mock_project = MagicMock()
@@ -658,34 +658,27 @@ class TestDiagnosticRootCause:
         s.project = mock_project
         s.base_path = "Y:/projects/2023/test/shots/"
 
-        with patch("os.listdir", side_effect=FileNotFoundError("No such dir")):
-            with pytest.raises(FileNotFoundError):
-                s.get_plates()
+        with patch("os.path.exists", return_value=False):
+            result = s.get_plates()
+            assert result == [], f"Expected empty list, got {result}"
 
-    def test_silent_exception_swallowing_in_get_reviewables(self):
+    def test_warnings_surfaced_from_get_reviewables(self):
         """
-        CORE BUG: get_reviewables wraps each shot in try/except Exception,
-        which catches FileNotFoundError, ValueError, etc.  This means:
-
-        1. If plate/render/workarea directories don't exist, the error is
-           silently swallowed and the user sees 0 results with no warning.
-        2. If system.Directory() raises ValueError (bad path root), same thing.
-        3. Only Comp works because those directories happen to exist on disk.
-
-        The fix should either:
-        (a) Add exists() guards in shot.get_comps() / get_plates() so they
-            return [] instead of raising, OR
-        (b) Log the exceptions at WARNING level so they're visible.
+        FIX VERIFIED: get_reviewables now collects warnings into warnings_out
+        so the GUI can display them. Exceptions are still caught, but now
+        reported.
         """
         get_reviewables = self._import_get_reviewables()
         shot = MagicMock()
-        shot.get_plates.side_effect = FileNotFoundError("plate dir missing")
+        shot.name = "SH010"
+        shot.get_plates.side_effect = RuntimeError("unexpected error")
 
-        # This should NOT crash — the exception is caught
-        result = get_reviewables([shot], "Plate", "")
+        warnings: list = []
+        result = get_reviewables([shot], "Plate", "", warnings_out=warnings)
         assert result is not None
         assert len(result) == 0
-        # But the user sees nothing — no error, no plates. Silent failure.
+        assert len(warnings) == 1, f"Expected 1 warning, got {len(warnings)}"
+        assert "SH010" in warnings[0]
 
     def _import_get_reviewables(self):
         from hpipe.apps.pipeDisplay import output_utils

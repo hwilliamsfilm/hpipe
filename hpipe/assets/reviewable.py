@@ -353,9 +353,17 @@ class SequenceReviewable(Reviewable):
 def reviewables_from_directory(directory: 'system.Directory') -> List['Reviewable']:
     """
     Factory function that returns all reviewables in a directory.
+
+    Returns an empty list (instead of raising) when *directory* does not
+    exist on disk.
+
     :param directory: Directory to search for reviewables.
     :return: List of reviewables in the directory.
     """
+    if not directory.exists():
+        log.warning(f"Directory does not exist, returning empty list: {directory.directory_path}")
+        return []
+
     reviewables = []
     for subdirectory in directory.get_children_directories():
         basename = os.path.basename(subdirectory.directory_path)
