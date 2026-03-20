@@ -160,6 +160,45 @@ class Reviewable(asset.Asset):
         pass
 
 
+class ProjectFileReviewable(Reviewable):
+    """
+    Lightweight adapter that lets a :class:`~hpipe.assets.projectFile.GenericProjectFile`
+    appear in the Output Viewer grid alongside image-based reviewables.
+
+    Project files (.hip, .nk, etc.) have no image data, so thumbnails always
+    fall back to the default placeholder.
+    """
+
+    def __init__(self, project_file: 'asset.Asset'):
+        from hpipe.assets import projectFile
+        if not isinstance(project_file, projectFile.GenericProjectFile):
+            raise TypeError(f"Expected GenericProjectFile, got {type(project_file)}")
+        directory = project_file.filepath.get_parent_directory()
+        name = project_file.asset_name or project_file.filepath.get_filename()
+        super().__init__(name, directory)
+        self.project_file = project_file
+        self.asset_type = asset.AssetType.PROJECT_FILE
+
+    def __repr__(self) -> str:
+        return f"ProjectFileReviewable <{self.asset_name}> @ {self.project_file.filepath}"
+
+    def get_filepath(self) -> 'system.Filepath':
+        return self.project_file.filepath
+
+    @classmethod
+    def from_dict(cls, asset_dict: Dict[Any, Any]) -> Union[None, Any]:
+        pass
+
+    def to_dict(self) -> Dict[str, Any]:
+        return self.project_file.to_dict()
+
+    def get_thumbnail_image(self) -> Optional[system.Filepath]:
+        # Project files have no image data — always use the fallback icon.
+        return None
+
+    def generate_thumbnail(self, thumbnail_path: 'system.Filepath') -> Optional[system.Filepath]:
+        return None
+
 class SequenceReviewable(Reviewable):
     """
     Class for a reviewable. Stores the all elements of a reviewable.

@@ -24,14 +24,15 @@ class Constants:
     """
     Constants for the project overview
     """
-    DIRECTORY_TYPES = {
-        "Comp": system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\output\comp"),
-        "Plate": system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\plate"),
-        "Workarea": system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\output\_workarea"),
-        "Renders": system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\output\render"),
-        "Ref": system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\ref"),
-        "Assets": system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\ref"),
-    }
+    DIRECTORY_TYPES = OrderedDict([
+        ("Comp", system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\output\comp")),
+        ("Plate", system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\plate")),
+        ("Renders", system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\output\render")),
+        ("Workarea", system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\output\_workarea")),
+        ("Project Files", system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\working")),
+        ("Ref", system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\ref")),
+        ("Assets", system.Filepath(r"Y:\projects\2023\{show}\shots\{shot}\ref")),
+    ])
     SHOWS = data_manager.ProjectDataManager().get_project_names()
     START_PROJECT = "defaults"
     TEMP_IMAGE = system.Filepath(r'Y:\_houdini_\icons\main.png')
@@ -52,40 +53,67 @@ def shots_from_show(show: str, database: Optional[data_manager.ProjectDataManage
 
 def get_reviewables(shot_list: Optional[List[shot.Shot]], type: str, filter: str) -> Optional[List[reviewable.Reviewable]]:
     """
-    Get a list of output directories for a given project, shot and type.
-    :param shot: List[shot.Shot]
-    :param type: string output type
-    :return: List of reviewables or None
+    Get a list of reviewables for a given project, shot list, and output type.
+
+    Supports: Comp, Plate, Renders, Workarea, Ref, Project Files, Assets.
+
+    :param shot_list: List of Shot objects to query.
+    :param type: Output-type string (must match a key in Constants.DIRECTORY_TYPES).
+    :param filter: Case-insensitive substring to filter reviewable names by.
+    :return: List of Reviewable objects, or None if *shot_list* is empty.
     """
     log.debug(f"Getting reviewables for {shot_list}")
     if not shot_list:
         return None
 
-    asset_db = data_manager.AssetDataManager()
+    reviewables: List[reviewable.Reviewable] = []
 
-    reviewables = []
-    for shot in shot_list:
-        if type == 'Comp':
-            reviewables += shot.get_comps()
-        elif type == 'Plate':
-            plates = shot.get_plates()
-            for plate in plates:
-                name = plate.asset_name
-                log.debug(f"Plate name: {name}")
-                if 'ref' in name.lower():
-                    reviewables.append(plate)
+    # ── Image-based reviewable types ──────────────────────────────────────
+    for shot_item in shot_list:
+        try:
+            if type == 'Comp':
+                reviewables += shot_item.get_comps()
+
+            elif type == 'Plate':
+                reviewables += shot_item.get_plates()
+
+            elif type == 'Renders':
+                render_dir = shot_item.get_render_path()
+                if render_dir.exists():
+                    reviewables += reviewable.reviewables_from_directory(render_dir)
+
+            elif type == 'Workarea':
+                workarea_dir = shot_item.get_workarea_path()
+                if workarea_dir.exists():
+                    reviewables += reviewable.reviewables_from_directory(workarea_dir)
+
+            elif type == 'Ref':
+                # Reference footage / images living under the shot's ref folder.
+                ref_dir = system.Directory(f"{shot_item.get_shot_path()}/ref")
+                if ref_dir.exists():
+                    reviewables += reviewable.reviewables_from_directory(ref_dir)
+
+            elif type == 'Project Files':
+                for pf in shot_item.get_project_files():
+                    reviewables.append(reviewable.ProjectFileReviewable(pf))
+
+        except Exception as exc:
+            log.warning(f"Error collecting '{type}' for {shot_item}: {exc}")
+
+    # ── Database-backed asset reviewables ─────────────────────────────────
     if type == 'Assets':
-        asset_reviewables = assetEntry.reviewable_factory(asset_db.get_assets())
-        reviewables += asset_reviewables
+        try:
+            asset_db = data_manager.AssetDataManager()
+            asset_reviewables = assetEntry.reviewable_factory(asset_db.get_assets())
+            reviewables += asset_reviewables
+        except Exception as exc:
+            log.warning(f"Error loading asset reviewables: {exc}")
 
-    filtered_reviewables = []
-    if filter and filter != '':
-        for reviewable in reviewables:
-            if filter in reviewable.asset_name.lower():
-                filtered_reviewables.append(reviewable)
-        log.debug(f"Filtered reviewables: {filtered_reviewables}")
-        return filtered_reviewables
+    # ── Filter ────────────────────────────────────────────────────────────
+    if filter and filter.strip():
+        needle = filter.strip().lower()
+        reviewables = [r for r in reviewables if needle in r.asset_name.lower()]
+        log.debug(f"Filtered reviewables ({needle}): {reviewables}")
+
     log.debug(f"Reviewables: {reviewables}")
     return reviewables
-
-
